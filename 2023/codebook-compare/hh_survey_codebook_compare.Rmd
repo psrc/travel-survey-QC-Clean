@@ -1,0 +1,31 @@
+---
+title: "compare_codebooks"
+author: "suzanne"
+date: "2023-06-20"
+output: html_document
+---
+
+
+```{r }
+library(readxl)
+codebook_2021_file<-'Combined_Codebook_2021_Update.xlsx'
+codebook_2023_file<-'PSRC_Combined_Codebook_2023_06122023.xlsx'
+
+```
+
+
+```{r }
+vars_2021<-read_excel(codebook_2021_file, sheet='Variable_List')
+vals_2021<-read_excel(codebook_2021_file, sheet='Value_Labels')
+
+vars_2023<-read_excel(codebook_2023_file, sheet='Variable List')
+vals_2023<-read_excel(codebook_2023_file, sheet='Value Labels')
+
+```
+
+```{r}
+setdiff(vars_2021$variable, vars_2023$variable)
+
+setdiff(vars_2023$variable, vals_2023$variable)
+
+```
