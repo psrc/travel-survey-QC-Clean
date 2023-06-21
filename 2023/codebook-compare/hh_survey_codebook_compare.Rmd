@@ -24,7 +24,7 @@ vals_2023<-read_excel(codebook_2023_file, sheet='Value Labels')
 ```
 
 ```{r}
-setdiff(vars_2021$variable, vars_2023$variable)
+setdiff(vars_2023$variable, vars_2021$variable)
 
 setdiff(vars_2023$variable, vals_2023$variable)
 
