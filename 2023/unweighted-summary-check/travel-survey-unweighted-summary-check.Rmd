@@ -1,0 +1,93 @@
+---
+title: "travel-survey-2023-unweighted-qaqc"
+author: "suzanne"
+date: "2023-06-21"
+output: html_document
+---
+
+
+
+−	Mean and median trip distances overall and by broad purposes.
+−	Percentage of workers who do not always work from home, on a given day, that are working from home (based on trip data).
+−	Share of transit trips by access mode.
+-Trips per person by purpose for people under 18
+```{r}
+library(DBI)
+library(dplyr)
+library(data.table)
+library(ggplot2)
+library(tidyr)
+library(scales)
+source('unweighted-summary-functions.R')
+
+```
+
+
+## Household level
+### prev_res_factors_forced
+```{r }
+hh_forced<-get_hhts_no_weights(survey=c("2019", "2021"), level='h', vars='prev_res_factors_forced')
+tbl_counts<-category_shares(hh_forced, 'prev_res_factors_forced')
+
+```
+```{r}
+ggplot(tbl_counts, aes(x=as.factor(survey_year), y=n, fill=prev_res_factors_forced))+
+  geom_bar(stat = "identity")
+ggplot(tbl_counts, aes(x=as.factor(survey_year), y=share, fill=prev_res_factors_forced))+
+  geom_bar(stat = "identity")
+```
+
+## Persons level
+### workplace
+
+```{r }
+person_workplace<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='p', vars='workplace')
+tbl_counts<-category_shares(person_workplace, 'workplace')
+
+```
+
+
+```{r}
+ggplot(tbl_counts, aes(x=as.factor(survey_year), y=n, fill=workplace))+
+  geom_bar(stat = "identity")
+ggplot(tbl_counts, aes(x=as.factor(survey_year), y=share, fill=workplace))+
+  geom_bar(stat = "identity")
+
+```
+
+### student status
+
+```{r }
+person_student<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='p', vars='student')
+tbl_counts<-category_shares(person_student, 'student')
+
+```
+
+### industry
+```{r }
+person_industry<-get_hhts_no_weights(survey=c( "2021"), level='p', vars='industry')
+tbl_counts<-category_shares(person_industry, 'industry')
+
+```
+
+
+
+### race and ethnicity
+### todo? many categories
+
+
+## Trip summaries
+
+### trips per person per day
+
+−	Mean trips per person per day overall and by broad purposes (work, school, shopping, social/rec, other).
+```{r }
+trips_purpose<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='t', vars='dest_purpose_cat')
+tbl_counts<-category_shares(trips_purpose, 'dest_purpose_cat')
+
+```
+```{r}
+tbl_wide_tot<- tbl_counts%>%select(survey_year, n, dest_purpose_cat)%>%
+    pivot_wider(names_from= survey_year, values_from=n)
+tbl_wide_tot
+```
