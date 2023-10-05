@@ -1,24 +1,55 @@
 ---
-title: "travel-survey-2023-unweighted-qaqc"
+title: "Travel Survey Unweighted Summary"
 author: "suzanne"
 date: "2023-06-21"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
+These summaries are a quick quality control check on the unweighted survey data. We will compare across 2017, 2019, 2021, and 2023 where feasible. The purpose is to identify major problems that need to be fixed in the data, not to fully validate the data since it's not weighted yet.
 
-
-−	Mean and median trip distances overall and by broad purposes.
-−	Percentage of workers who do not always work from home, on a given day, that are working from home (based on trip data).
-−	Share of transit trips by access mode.
--Trips per person by purpose for people under 18
-```{r}
+```{r include=FALSE, message=FALSE, warning=FALSE}
 library(DBI)
 library(dplyr)
 library(data.table)
 library(ggplot2)
 library(tidyr)
+library(janitor)
 library(scales)
 source('unweighted-summary-functions.R')
+
+```
+
+## Count records on households, persons, day, trip tables
+
+```{r}
+hh_count<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='h', vars='household_id')%>%
+          group_by(survey_year)%>%
+          count()
+# Household Count
+hh_count
+
+person_count<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='p', vars='person_id')%>%
+          group_by(survey_year)%>%
+          count()
+
+# Person Count
+person_count
+
+day_count<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='d', vars='day_id')%>%
+          group_by(survey_year)%>%
+          count()
+
+#Day Count
+day_count
+
+trip_count<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='t', vars='trip_id')%>%
+          group_by(survey_year)%>%
+          count()
+
+#Trip Count
+trip_count
 
 ```
 
@@ -30,6 +61,7 @@ hh_forced<-get_hhts_no_weights(survey=c("2019", "2021"), level='h', vars='prev_r
 tbl_counts<-category_shares(hh_forced, 'prev_res_factors_forced')
 
 ```
+
 ```{r}
 ggplot(tbl_counts, aes(x=as.factor(survey_year), y=n, fill=prev_res_factors_forced))+
   geom_bar(stat = "identity")
@@ -73,21 +105,98 @@ tbl_counts<-category_shares(person_industry, 'industry')
 
 
 ### race and ethnicity
-### todo? many categories
+#### todo? many categories
 
 
 ## Trip summaries
 
 ### trips per person per day
 
-−	Mean trips per person per day overall and by broad purposes (work, school, shopping, social/rec, other).
 ```{r }
 trips_purpose<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='t', vars='dest_purpose_cat')
 tbl_counts<-category_shares(trips_purpose, 'dest_purpose_cat')
 
 ```
+
+
 ```{r}
 tbl_wide_tot<- tbl_counts%>%select(survey_year, n, dest_purpose_cat)%>%
     pivot_wider(names_from= survey_year, values_from=n)
 tbl_wide_tot
+```
+
+```{r}
+
+trip_counts<-trips_purpose%>%
+    group_by(survey_year, dest_purpose_cat)%>%
+    summarise(n=n())
+  
+people_count<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='p', vars='person_id')%>%
+  group_by(survey_year)%>%count()
+
+```
+
+```{r}
+day_trips<-day_count %>% 
+              left_join(trip_counts, by=join_by(survey_year), suffix=c(".day", ".trip"))%>%
+              mutate(trips_person=n.trip/n.day)
+
+
+trips_purp_year<-day_trips%>%pivot_wider(names_from=survey_year, values_from=trips_person, id_cols=dest_purpose_cat)%>%adorn_totals("row")
+
+
+trips_purp_year
+
+```
+###Trips per person by purpose for people under 18
+
+```{r}
+trips_purpose_kids<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='t', vars=c('dest_purpose_cat', 'age_category'))%>%filter(age_category=='Under 18 years')%>%
+  group_by(survey_year, dest_purpose_cat)%>%count()
+
+
+kids_day_count<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='d', vars=c('day_id', 'age_category'))%>%filter(age_category=='Under 18 years')%>%group_by(survey_year)%>%count()
+```
+### Kids trip summary
+```{r}
+day_trip_kids<-kids_day_count %>% 
+              left_join(trips_purpose_kids, by=join_by(survey_year), suffix=c(".day", ".trip"))%>%
+              mutate(trips_person=n.trip/n.day)
+
+
+kids_trips_purp_year<-day_trip_kids%>%pivot_wider(names_from=survey_year, values_from=trips_person, id_cols=dest_purpose_cat)%>%adorn_totals("row")
+
+
+kids_trips_purp_year
+
+```
+−	Mean and median trip distances overall and by broad purposes.
+```{r}
+trip_lengths<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='t', vars=c('dest_purpose_cat', 'trip_path_distance'))
+
+# missing trip lengths
+for(year in c("2017", "2019", "2021")){
+  trips_lengths_yr<-trip_lengths%>%filter(survey_year==!!year)
+  print(paste(year, 'Trip Length Summary'))
+  print(summary(trips_lengths_yr$trip_path_distance))
+}
+
+# Median Trip Lengths over time and purpose
+trip_purp<-trip_lengths%>%
+group_by(survey_year, dest_purpose_cat)%>%
+drop_na()%>% 
+summarise(trip_path_dist_median=median(trip_path_distance))%>%
+  pivot_wider(names_from=survey_year, values_from=trip_path_dist_median, id_cols=dest_purpose_cat)
+
+```
+### Transit Trips
+## Transit Trips by Access Mode
+```{r}
+trip_mode<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='t', vars=c('main_mode'))
+mode_summary<-category_shares(trip_mode, 'main_mode')
+```
+```{r}
+transit_access_mode<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='t', vars=c('mode_acc'))
+mode_acc_summary<-category_shares(transit_access_mode, 'mode_acc')
+
 ```
