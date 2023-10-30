@@ -1024,10 +1024,10 @@ GO
 			SET ti.trip_link = -1 * ti.trip_link
 			FROM #trip_ingredient AS ti JOIN cte2 ON cte2.person_id = ti.person_id AND cte2.trip_link = ti.trip_link;
 
-		DROP PROCEDURE IF EXISTS HHSurvey.link_trips;
+	/*	DROP PROCEDURE IF EXISTS HHSurvey.link_trips;
 		GO
 		CREATE PROCEDURE HHSurvey.link_trips AS
-		BEGIN
+		BEGIN*/
 
 		-- meld the trip ingredients to create the fields that will populate the linked trip, and saves those as a separate table, 'linked_trip'.
 
@@ -1196,9 +1196,9 @@ GO
 		DROP TABLE IF EXISTS #trip_ingredient
 		DROP TABLE IF EXISTS #linked_trips
 
-		END
+		/*END
 
-		EXECUTE HHSurvey.link_trips;
+		EXECUTE HHSurvey.link_trips;*/
 			 
 /* STEP 6. Harmonize trips where possible: add trips for non-reporting cotravelers, missing trips between destinations, and remove duplicates  */
 /*
