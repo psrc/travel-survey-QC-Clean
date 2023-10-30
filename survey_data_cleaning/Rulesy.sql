@@ -106,7 +106,9 @@ GO
 			[driver] smallint NULL,
 			[change_vehicles] smallint NULL,
 			[is_access] smallint NULL,
-			[is_egress] smallint NULL,			
+			[is_egress] smallint NULL,
+			[has_access] smallint NULL,
+			[has_egress] smallint NULL,						
 			[mode_acc] smallint NULL,
 			[mode_egr] smallint NULL,
 			[speed_mph] [float] NULL,
@@ -168,7 +170,9 @@ GO
 			,[driver]
 			,[change_vehicles]
 			,[is_access]
-			,[is_egress] 
+			,[is_egress]
+			,[has_access]
+			,[has_egress]			
 			,[mode_acc]
 			,[mode_egr]			
 			,[speed_mph]
@@ -226,6 +230,8 @@ GO
 			,cast([change_vehicles] as smallint)
 			,cast([is_access] as smallint)
 			,cast([is_egress] as smallint)	
+			,cast([has_access] as smallint)
+			,cast([has_egress] as smallint)	
 			,cast([mode_acc] as smallint)
 			,cast([mode_egr] as smallint)
 			,CAST(speed_mph AS [float])
@@ -253,6 +259,7 @@ GO
 				revision_code 	nvarchar(255) NULL;--,
 				--psrc_resolved   smallint NULL,
 				--psrc_comment 	nvarchar(255) NULL;
+		GO
 
 /*		ALTER TABLE HHSurvey.household 	ADD home_geog 	GEOGRAPHY 	NULL,
 											home_lat 	FLOAT 		NULL,
@@ -284,6 +291,8 @@ GO
 		UPDATE HHSurvey.person 		SET work_geog	= geography::STGeomFromText('POINT(' + CAST(work_lng 	  AS VARCHAR(20)) + ' ' + CAST(work_lat 	AS VARCHAR(20)) + ')', 4326),
 								      school_geog	= geography::STGeomFromText('POINT(' + CAST(school_loc_lng  AS VARCHAR(20)) + ' ' + CAST(school_loc_lat  AS VARCHAR(20)) + ')', 4326);
 */
+		GO
+
 		--ALTER TABLE HHSurvey.Trip ADD CONSTRAINT PK_recid PRIMARY KEY CLUSTERED (recid) WITH FILLFACTOR=80;
 		CREATE INDEX person_idx ON HHSurvey.Trip (person_id ASC);
 		CREATE INDEX tripnum_idx ON HHSurvey.Trip (tripnum ASC);
@@ -926,13 +935,15 @@ GO
 			SET modes 			= CONCAT_WS(',',ti_wndw.mode_acc, ti_wndw.mode_1, ti_wndw.mode_2, ti_wndw.mode_3, ti_wndw.mode_4, ti_wndw.mode_5, ti_wndw.mode_egr)
 		*/
 		UPDATE HHSurvey.Trip
-				SET modes = STUFF(	COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_acc) 		  THEN trip.mode_acc 		 ELSE NULL END AS nvarchar), '') +
-									COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_1)		 	  THEN trip.mode_1 			 ELSE NULL END AS nvarchar), '') + 
-									COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_2)			  THEN trip.mode_2 			 ELSE NULL END AS nvarchar), '') + 
-									COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_3) 		  THEN trip.mode_3 			 ELSE NULL END AS nvarchar), '') + 
-									COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_4) 		  THEN trip.mode_4 			 ELSE NULL END AS nvarchar), '') + 
-									COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_egr) 		  THEN trip.mode_egr		 ELSE NULL END AS nvarchar), ''), 1, 1, '');							
-		
+				SET modes = Elmer.dbo.TRIM(Elmer.dbo.rgx_replace(
+							STUFF(	COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_acc) THEN trip.mode_acc ELSE NULL END AS nvarchar), '') +
+									COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_1)	  THEN trip.mode_1 	 ELSE NULL END AS nvarchar), '') + 
+									COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_2)	  THEN trip.mode_2 	 ELSE NULL END AS nvarchar), '') + 
+									COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_3)   THEN trip.mode_3 	 ELSE NULL END AS nvarchar), '') + 
+									COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_4)   THEN trip.mode_4 	 ELSE NULL END AS nvarchar), '') + 
+									COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_egr) THEN trip.mode_egr ELSE NULL END AS nvarchar), ''), 1, 1, ''),
+							'(-?\b\d+\b),(?=\b\1\b)','',1));							
+
 		-- remove component records into separate table, starting w/ 2nd component (i.e., first is left in trip table).  The criteria here determine which get considered components.
 		DROP TABLE IF EXISTS HHSurvey.trip_ingredients_done;
 		GO
@@ -953,11 +964,10 @@ GO
 		WHERE 	trip.dest_is_home IS NULL 																			-- destination of preceding leg isn't home
 			AND trip.dest_is_work IS NULL																			-- destination of preceding leg isn't work
 			AND trip.travelers_total = next_trip.travelers_total	 												-- traveler # the same								
-			AND (trip.mode_1<>next_trip.mode_1 
-				OR (trip.mode_1 = next_trip.mode_1 AND EXISTS (SELECT 1 FROM HHSurvey.transitmodes AS tm WHERE tm.mode_id=trip.mode_1 )))		--either change modes or switch transit lines                     
+			AND (trip.mode_1<>next_trip.mode_1 OR EXISTS (SELECT 1 FROM HHSurvey.transitmodes AS tm WHERE tm.mode_id=trip.mode_1 ))	--either change modes or switch transit lines                     
 			AND ((trip.dest_purpose = 60 AND DATEDIFF(Minute, trip.arrival_time_timestamp, next_trip.depart_time_timestamp) < 30) -- change modes under 30min dwell
 				  OR (trip.dest_purpose = next_trip.dest_purpose AND trip.dest_purpose NOT BETWEEN 45 AND 48 AND DATEDIFF(Minute, trip.arrival_time_timestamp, next_trip.depart_time_timestamp) < 15)  -- other non-PUDO purposes if identical, under 15min dwell
-				  OR (trip.is_access=1 OR trip.is_egress=1)    -- broken out by RSG
+				  OR (next_trip.has_access=1 OR next_trip.is_egress=1)    -- broken out by RSG
 				);
 
 		/* Less restricted linkages for 'mode change' only 
@@ -1001,21 +1011,18 @@ GO
 					FOR XML PATH('')), 1, 1, NULL),'(\b\d+\b),(?=\1)','',1)) AS modes	
 				FROM #trip_ingredient as ti_wndw2),
 		cte2 AS 
-			(SELECT ti3.person_id, ti3.trip_link 			--sets with more than 4 trip components
+			(SELECT ti3.person_id, ti3.trip_link 			--sets with more than 6 trip components
 				FROM #trip_ingredient as ti3 GROUP BY ti3.person_id, ti3.trip_link
-				HAVING count(*) > 4
-			UNION ALL SELECT ti4.person_id, ti4.trip_link --sets with two items that each denote a separate trip
+				HAVING count(*) > 6 
+			/*UNION ALL SELECT ti4.person_id, ti4.trip_link --sets with two items that each denote a separate trip
 				FROM #trip_ingredient as ti4 GROUP BY ti4.person_id, ti4.trip_link
-				HAVING sum(CASE WHEN ti4.change_vehicles 	  = 1 				THEN 1 ELSE 0 END) > 1
+				HAVING sum(CASE WHEN ti4.change_vehicles = 1 THEN 1 ELSE 0 END) > 1*/
 			UNION ALL SELECT cte_b.person_id, cte_b.trip_link 	--sets with a pair of modes repeating in reverse (i.e., return trip)
 				FROM cte_b
 				WHERE Elmer.dbo.rgx_find(cte_b.modes,'\b(\d+),(\d+)\b,.+(?=\2,\1)',1)=1)
 		UPDATE ti
 			SET ti.trip_link = -1 * ti.trip_link
 			FROM #trip_ingredient AS ti JOIN cte2 ON cte2.person_id = ti.person_id AND cte2.trip_link = ti.trip_link;
-
-		--SELECT CASE WHEN trip_link > 1 THEN 'queued' ELSE 'removed' END, count(*) FROM #trip_ingredient GROUP BY CASE WHEN trip_link > 1 THEN 'queued' ELSE 'removed' END
-
 
 		DROP PROCEDURE IF EXISTS HHSurvey.link_trips;
 		GO
@@ -1058,21 +1065,22 @@ GO
 				FIRST_VALUE(ti_wndw.mode_acc) 		OVER (PARTITION BY CONCAT(ti_wndw.person_id,ti_wndw.trip_link) ORDER BY ti_wndw.tripnum ASC)  AS mode_acc,
 				FIRST_VALUE(ti_wndw.mode_egr) 		OVER (PARTITION BY CONCAT(ti_wndw.person_id,ti_wndw.trip_link) ORDER BY ti_wndw.tripnum DESC) AS mode_egr,
 				--STRING_AGG(ti_wnd.modes,',') 		OVER (PARTITION BY ti_wnd.trip_link ORDER BY ti_wndw.tripnum ASC) AS modes, -- This can be used once we upgrade from MSSQL16
-				STUFF(
+				Elmer.dbo.TRIM(Elmer.dbo.rgx_replace(STUFF(
 					(SELECT ',' + ti1.modes
 					FROM #trip_ingredient AS ti1 
 					WHERE ti1.person_id = ti_wndw.person_id AND ti1.trip_link = ti_wndw.trip_link
 					GROUP BY ti1.modes
 					ORDER BY ti_wndw.person_id DESC, ti_wndw.tripnum DESC
-					FOR XML PATH('')), 1, 1, NULL) AS modes
+					FOR XML PATH('')), 1, 1, NULL),'(-?\b\d+\b),(?=\b\1\b)','',1)) AS modes
 			FROM #trip_ingredient as ti_wndw WHERE ti_wndw.trip_link > 0 )
-		SELECT cte_wndw.*, cte_agg.* INTO #linked_trips
+		SELECT DISTINCT cte_wndw.*, cte_agg.* INTO #linked_trips
 			FROM cte_wndw JOIN cte_agg ON cte_wndw.person_id2 = cte_agg.person_id AND cte_wndw.trip_link2 = cte_agg.trip_link;
 
 		-- discard potential linked trips that are actually loops, returning to the same location
-	
-		DELETE lt FROM #linked_trips AS lt JOIN HHSurvey.Trip AS t on t.person_id = lt.person_id AND t.tripnum = lt.trip_link
-			WHERE t.origin_geog.STDistance(geography::STGeomFromText('POINT(' + CAST(lt.dest_lng AS VARCHAR(20)) + ' ' + CAST(lt.dest_lat AS VARCHAR(20)) + ')', 4326)) < 50;
+
+		DELETE lt 
+		FROM #linked_trips AS lt JOIN HHSurvey.Trip AS t on t.person_id = lt.person_id AND t.tripnum = lt.trip_link
+		WHERE t.origin_geog.STDistance(geography::STGeomFromText('POINT(' + CAST(lt.dest_lng AS VARCHAR(20)) + ' ' + CAST(lt.dest_lat AS VARCHAR(20)) + ')', 4326)) < 50;
 
 		-- delete the components that will get replaced with linked trips
 		DELETE t
