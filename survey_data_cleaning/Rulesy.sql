@@ -1104,6 +1104,16 @@ GO
 				  OR (trip.dest_purpose = next_trip.dest_purpose AND trip.dest_purpose NOT BETWEEN 45 AND 48 AND DATEDIFF(Minute, trip.arrival_time_timestamp, next_trip.depart_time_timestamp) < 15)  -- other non-PUDO purposes if identical, under 15min dwell
 				  OR (next_trip.has_access=1 OR next_trip.is_egress=1)    -- broken out by RSG
 				);
+		
+		/* This is an example trip that should have been selected into the ingredients in the query above but was not,
+		I'm sure there are many other different cases, this is just one example.
+		You can change the query to see if this trip is selected; I can get the query to select this trip; but then
+		there are other problems after that.
+		For this trip, origin_purpose=60, dest_purpose=60, mode_1=23, has_access=1, has_egress=1
+		SELECT * FROM #trip_ingredient
+		WHERE person_id=2300013702 AND daynum=1
+		ORDER BY tripid
+		*/
 
 		/* Less restricted linkages for 'mode change' only 
 		SELECT next_trip.*, CAST(0 AS int) AS trip_link INTO #trip_ingredient  
