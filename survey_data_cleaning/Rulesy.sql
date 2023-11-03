@@ -1096,17 +1096,23 @@ GO
 		SELECT next_trip.*, CAST(0 AS int) AS trip_link INTO #trip_ingredient
 		FROM HHSurvey.Trip as trip 
 			JOIN HHSurvey.Trip AS next_trip ON trip.person_id=next_trip.person_id AND trip.tripnum + 1 = next_trip.tripnum
-		WHERE 	trip.dest_is_home IS NULL 																			-- destination of preceding leg isn't home
-			AND trip.dest_is_work IS NULL																			-- destination of preceding leg isn't work
-			AND trip.travelers_total = next_trip.travelers_total	 												-- traveler # the same								
-			AND (trip.mode_1<>next_trip.mode_1 OR EXISTS (SELECT 1 FROM HHSurvey.transitmodes AS tm WHERE tm.mode_id=trip.mode_1 ))	--either change modes or switch transit lines                     
-			AND ((trip.dest_purpose = 60 AND DATEDIFF(Minute, trip.arrival_time_timestamp, next_trip.depart_time_timestamp) < 30) -- change modes under 30min dwell
-				  OR (trip.dest_purpose = next_trip.dest_purpose AND trip.dest_purpose NOT BETWEEN 45 AND 48 AND DATEDIFF(Minute, trip.arrival_time_timestamp, next_trip.depart_time_timestamp) < 15)  -- other non-PUDO purposes if identical, under 15min dwell
-				  OR (next_trip.has_access=1 OR next_trip.is_egress=1)    -- broken out by RSG
-				);
+		WHERE 	--trip.dest_is_home IS NULL 																			-- destination of preceding leg isn't home
+			--AND trip.dest_is_work IS NULL																			-- destination of preceding leg isn't work
+			--AND trip.travelers_total = next_trip.travelers_total	 												-- traveler # the same								
+			--AND (trip.mode_1<>next_trip.mode_1 OR EXISTS (SELECT 1 FROM HHSurvey.transitmodes AS tm WHERE tm.mode_id=trip.mode_1 ))	--either change modes or switch transit lines                     
+			trip.dest_purpose = 60 
+			--AND DATEDIFF(Minute, trip.arrival_time_timestamp, next_trip.depart_time_timestamp) < 30) -- change modes under 30min dwell
+				  --OR (trip.dest_purpose = next_trip.dest_purpose AND trip.dest_purpose NOT BETWEEN 45 AND 48 AND DATEDIFF(Minute, trip.arrival_time_timestamp, next_trip.depart_time_timestamp) < 15)  -- other non-PUDO purposes if identical, under 15min dwell
+				  --OR (next_trip.has_access=1 OR next_trip.is_egress=1)    -- broken out by RSG
+				;
 		
-		/* This is an example trip that should have been selected into the ingredients in the query above but was not,
-		I'm sure there are many other different cases, this is just one example.
+		SELECT * FROM #trip_ingredient
+		WHERE person_id=2300013702 AND daynum=1
+		ORDER BY tripid
+		
+		/* This is an example trip, 2300013702013 that should have been selected into the ingredients in the query above but was not,
+		I'm sure there are many other different cases, this is just one example. the trip after 23000013702004 is missing a link
+		The trip ends with a change mode purpose, goes to 10 as origin purpose
 		You can change the query to see if this trip is selected; I can get the query to select this trip; but then
 		there are other problems after that.
 		For this trip, origin_purpose=60, dest_purpose=60, mode_1=23, has_access=1, has_egress=1
