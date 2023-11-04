@@ -682,7 +682,8 @@ GO
 		AS
 		BEGIN
 		WITH tripnum_rev(recid, person_id, tripnum) AS
-			(SELECT t0.recid, t0.person_id, ROW_NUMBER() OVER(PARTITION BY t0.person_id ORDER BY t0.depart_time_timestamp ASC) AS tripnum 
+			(SELECT t0.recid, t0.person_id, ROW_NUMBER() OVER(PARTITION BY t0.person_id ORDER BY t0.depart_time_timestamp ASC, 
+			t0.arrival_time_timestamp ASC) AS tripnum 
 			 	FROM HHSurvey.Trip AS t0 
 				WHERE t0.person_id = CASE WHEN @target_person_id IS NULL THEN t0.person_id ELSE @target_person_id END)
 		UPDATE t
@@ -692,7 +693,7 @@ GO
 		END
 		GO
 		EXECUTE HHSurvey.tripnum_update;
-
+        SELECT * from HHSurvey.Trip where person_id = 2300013702 
 	-- Recalculation of derived fields
 
 		DROP PROCEDURE IF EXISTS HHSurvey.recalculate_after_edit;
@@ -1100,27 +1101,17 @@ GO
 			--AND trip.dest_is_work IS NULL																			-- destination of preceding leg isn't work
 			--AND trip.travelers_total = next_trip.travelers_total	 												-- traveler # the same								
 			--AND (trip.mode_1<>next_trip.mode_1 OR EXISTS (SELECT 1 FROM HHSurvey.transitmodes AS tm WHERE tm.mode_id=trip.mode_1 ))	--either change modes or switch transit lines                     
-			trip.dest_purpose = 60 
+			trip.dest_purpose = 60 AND next_trip.origin_purpose =60
 			--AND DATEDIFF(Minute, trip.arrival_time_timestamp, next_trip.depart_time_timestamp) < 30) -- change modes under 30min dwell
 				  --OR (trip.dest_purpose = next_trip.dest_purpose AND trip.dest_purpose NOT BETWEEN 45 AND 48 AND DATEDIFF(Minute, trip.arrival_time_timestamp, next_trip.depart_time_timestamp) < 15)  -- other non-PUDO purposes if identical, under 15min dwell
 				  --OR (next_trip.has_access=1 OR next_trip.is_egress=1)    -- broken out by RSG
-				;
+	    ORDER BY tripnum
 		
 		SELECT * FROM #trip_ingredient
-		WHERE person_id=2300013702 AND daynum=1
-		ORDER BY tripid
+		WHERE person_id=2300013702 AND daynum=3
+		ORDER BY tripnum
 		
-		/* This is an example trip, 2300013702013 that should have been selected into the ingredients in the query above but was not,
-		I'm sure there are many other different cases, this is just one example. the trip after 23000013702004 is missing a link
-		The trip ends with a change mode purpose, goes to 10 as origin purpose
-		You can change the query to see if this trip is selected; I can get the query to select this trip; but then
-		there are other problems after that.
-		For this trip, origin_purpose=60, dest_purpose=60, mode_1=23, has_access=1, has_egress=1
-		SELECT * FROM #trip_ingredient
-		WHERE person_id=2300013702 AND daynum=1
-		ORDER BY tripid
-		*/
-
+	
 		/* Less restricted linkages for 'mode change' only 
 		SELECT next_trip.*, CAST(0 AS int) AS trip_link INTO #trip_ingredient  
 			FROM HHSurvey.Trip as trip  
@@ -1263,6 +1254,8 @@ GO
 			FROM HHSurvey.Trip AS t JOIN #linked_trips AS lt ON t.person_id = lt.person_id AND t.tripnum = lt.trip_link;
 
 		--move the ingredients to another named table so this procedure can be re-run as sproc during manual cleaning
+		
+
 
 		DELETE FROM #trip_ingredient
 		OUTPUT deleted.* INTO HHSurvey.trip_ingredients_done
@@ -1346,6 +1339,10 @@ GO
 		--temp tables should disappear when the spoc ends, but to be tidy we explicitly delete them.
 		DROP TABLE IF EXISTS #trip_ingredient
 		DROP TABLE IF EXISTS #linked_trips
+
+		SELECT * FROM HHSurvey.Trip
+		WHERE person_id=2300013702 AND daynum=3
+		ORDER BY tripnum
 
 		/*END
 
