@@ -1757,11 +1757,11 @@ GO
  
 			UNION ALL SELECT t.recid, t.person_id, t.tripnum,					                        'missing next trip link' AS error_flag
 			FROM trip_ref AS t JOIN HHSurvey.Trip AS t_next ON  t.person_id = t_next.person_id AND t.tripnum + 1 = t_next.tripnum
-				WHERE ABS(t.dest_geog.STDistance(t_next.origin_geog)) > 500  --500m difference or more
+				WHERE ROUND(t.dest_lat,1) <> ROUND(t_next.origin_lat,1)
 
-			UNION ALL SELECT t_next.recid, t_next.person_id, t_next.tripnum,	              	           'missing prior trip link' AS error_flag
-			FROM trip_ref AS t JOIN HHSurvey.Trip AS t_next ON t.person_id = t_next.person_id AND  t.tripnum + 1 = t_next.tripnum
-				WHERE ABS(t.dest_geog.STDistance(t_next.origin_geog)) > 500	--500m difference or more			
+			--UNION ALL SELECT t_next.recid, t_next.person_id, t_next.tripnum,	              	           'missing prior trip link' AS error_flag
+			--FROM trip_ref AS t JOIN HHSurvey.Trip AS t_next ON t.person_id = t_next.person_id AND  t.tripnum + 1 = t_next.tripnum
+			--	WHERE ABS(t.dest_geog.STDistance(t_next.origin_geog)) > 500	--500m difference or more			
 
 			UNION ALL SELECT t.recid, t.person_id, t.tripnum,	              	 			 			 '"change mode" purpose' AS error_flag	
 				FROM trip_ref AS t JOIN HHSurvey.Trip AS t_next ON t.person_id = t_next.person_id AND  t.tripnum + 1 = t_next.tripnum
