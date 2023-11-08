@@ -1,6 +1,6 @@
 --Modes summary
     WITH cte AS
-    (SELECT t.personid, (SELECT MAX(member) FROM (VALUES (t.mode_1), (t.mode_2),(t.mode_3),(t.mode_4)) AS modes(member) WHERE member <> 97) AS mode_x FROM HHSurvey.Trip AS t)
+    (SELECT t.person_id, (SELECT MAX(member) FROM (VALUES (t.mode_1), (t.mode_2),(t.mode_3),(t.mode_4)) AS modes(member) WHERE member <> 97) AS mode_x FROM HHSurvey.Trip AS t)
     SELECT cte.mode_x, count(*) AS tripcount
     FROM cte 
     GROUP BY cte.mode_x ORDER BY cte.mode_x;
@@ -31,8 +31,8 @@
 --Trip error code count
 SELECT error_flag, [1] AS rMove, [2] AS rSurvey
 FROM
-(SELECT t.hhgroup, tef.error_flag, t.recid
-FROM HHSurvey.trip_error_flags AS tef JOIN HHSurvey.Trip as t ON t.recid=tef.recid) AS SourceTable
+(SELECT CASE WHEN h.hhgroup=11 THEN 1 ELSE 2 END AS hhgroup, tef.error_flag, t.recid
+FROM HHSurvey.trip_error_flags AS tef JOIN HHSurvey.Trip as t ON t.recid=tef.recid JOIN hhts_cleaning.HHSurvey.Household AS h ON t.hhid=h.hhid) AS SourceTable
 PIVOT
 (
  count(recid)
@@ -40,29 +40,42 @@ PIVOT
 ) AS pvt
 ORDER BY pvt.error_flag;
 
+--Trip error code count
+SELECT error_flag, [1] AS iOS_flag, [0] AS all_else
+FROM
+(SELECT t.trace_quality_flag, tef.error_flag, t.recid
+FROM HHSurvey.trip_error_flags AS tef JOIN HHSurvey.Trip as t ON t.recid=tef.recid JOIN HHSurvey.Household AS h ON t.hhid=h.hhid) AS SourceTable
+PIVOT
+(
+ count(recid)
+ FOR trace_quality_flag IN ([1], [0])
+) AS pvt
+ORDER BY pvt.error_flag;
+
+SELECT t.trace_quality_flag, count(*) FROM HHSurvey.Trip as t JOIN hhts_cleaning.HHSurvey.Household AS h ON t.hhid=h.hhid GROUP BY t.trace_quality_flag;
 --Error Flag reporting crosstab
 
 		WITH elevated AS 
-			(SELECT cte_t.personid FROM HHSurvey.Trip AS cte_t
+			(SELECT cte_t.person_id FROM HHSurvey.Trip AS cte_t
 				WHERE (cte_t.psrc_comment IS NOT NULL) 
-				GROUP BY cte_t.personid)
+				GROUP BY cte_t.person_id)
 		SELECT error_flag, pivoted.[1] AS rMove, pivoted.[2] AS rSurvey, pivoted.[3] AS elevated
-		FROM (SELECT tef.error_flag, CASE WHEN e.personid IS NOT NULL THEN 3 ELSE t.hhgroup END AS category, count(t.recid) AS n
+		FROM (SELECT tef.error_flag, CASE WHEN e.person_id IS NOT NULL THEN 3 ELSE t.hhgroup END AS category, count(t.recid) AS n
 				FROM HHSurvey.Trip AS t 
 					JOIN HHSurvey.trip_error_flags AS tef ON t.recid = tef.recid 
-					LEFT JOIN elevated AS e ON t.personid = e.personid 
+					LEFT JOIN elevated AS e ON t.person_id = e.person_id 
 				WHERE t.psrc_resolved IS NULL
-				GROUP BY tef.error_flag, CASE WHEN e.personid IS NOT NULL THEN 3 ELSE t.hhgroup END) AS source
+				GROUP BY tef.error_flag, CASE WHEN e.person_id IS NOT NULL THEN 3 ELSE t.hhgroup END) AS source
 		PIVOT (SUM(n) FOR category IN ([1], [2], [3])) AS pivoted
 		ORDER BY pivoted.[1] DESC;
 
 
 		SELECT error_flag, /*pivoted.[1] AS rMove,*/ pivoted.[2] AS rSurvey
-		FROM (SELECT tef.error_flag, t.data_source AS category, count(t.recid) AS n
+		FROM (SELECT tef.error_flag, h.hhgroup AS category, count(t.recid) AS n
 				FROM HHSurvey.Trip AS t 
-					JOIN HHSurvey.trip_error_flags AS tef ON t.recid = tef.recid 
+					JOIN HHSurvey.trip_error_flags AS tef ON t.recid = tef.recid JOIN HHSurvey.Household AS h ON t.hhid=h.hhid
 				WHERE t.psrc_resolved IS NULL
-				GROUP BY tef.error_flag, t.data_source) AS source
+				GROUP BY tef.error_flag, h.hhgroup) AS source
 		PIVOT (SUM(n) FOR category IN ([1], [2])) AS pivoted
 		ORDER BY pivoted.[1] DESC;
 
