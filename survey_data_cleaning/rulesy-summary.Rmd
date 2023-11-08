@@ -1,0 +1,162 @@
+---
+title: Summarizing Rulesy Error Codes
+  Fixie
+author: "PSRC"
+date: "2023-10-04"
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '4'
+  html_document:
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+    css: styles.css
+---
+
+```{r }
+library(data.table) # general data manipulation
+library(srvyr)      # survey statistics
+library(dplyr)      # helpers for srvyr (mutate, group_by, and %>% pipe), 
+                    # plus function near(), used in qa/qc checks 
+library(stringr)    # string helper functions
+library(flextable)  # formatted tables
+library(ggplot2)    # plotting
+library(scales)     # ggplot2 helpers
+library(plotly)     # interactive plots
+library(rstudioapi) # for setting working directory
+library(psrcelmer)
+library(tidyr)
+
+# Point to where the 2023 codebook lives:
+codebook_path = 'J:/Projects/Surveys/HHTravel/Survey2023/Data/data_deliverable_81823/codebook_guide/PSRC_Combined_Codebook_2023_08162023.xlsx'
+
+# Read Data  ===================================================================
+
+
+
+hh_rulesy<-get_table(db_name = "HouseholdTravelSurvey2023", "combined_data", "v_household")
+person_rulesy<-get_table(db_name = "HouseholdTravelSurvey2023", "combined_data", "v_person")
+day_rulesy<-get_table(db_name = "HouseholdTravelSurvey2023", "combined_data", "v_day")
+trip_raw<-get_table(db_name = "HouseholdTravelSurvey2023", "combined_data", "v_trip")
+trip_rulesy_before<-get_table(db_name = "hhts_cleaning", "HHSurvey", "Trip")
+trip_error_flags<-get_table(db_name = "hhts_cleaning", "HHSurvey", "trip_error_flags")
+error_types<-get_table(db_name = "hhts_cleaning", "HHSurvey", "error_types")
+
+
+
+
+
+## Codebook -------------------------------------------------------------------- 
+
+variables = readxl::read_xlsx(
+  codebook_path,
+  sheet = 'variable_list_2023'
+)
+
+values =  readxl::read_xlsx(
+  codebook_path,
+  sheet = 'value_labels_2023'
+)
+
+setDT(variables)
+setDT(values)
+```
+
+Create visualizable data tables, before and after the changes. Also show the errors
+```{r}
+trip_raw<-trip_raw%>%mutate(tripid=as.character(tripid))
+trip_rulesy<-trip_rulesy_before%>%mutate(tripid=as.character(tripid))
+trip_rulesy<-left_join(trip_rulesy, trip_error_flags, by = c('person_id', 'tripnum'), suffix=c('_rulesy', '_error'))%>%group_by(person_id, tripnum)%>%filter(row_number()==1)
+#trip_rulesy<-trip_rulesy%>%mutate(person_id=as.character(person_id))
+#person_rulesy<-person_rulesy%>%mutate(person_id=as.character(person_id))
+#trip_rulesy<-left_join(trip_rulesy, person_rulesy, by ='person_id')
+
+trip_rulesy_subset<-trip_rulesy%>%
+  select(error_flag, person_id, day_id, tripnum, tripid, depart_time_timestamp, arrival_time_timestamp, mode_1, distance_miles, travel_time, speed_mph, origin_lat, origin_lng, dest_lat, dest_lng, origin_purpose,dest_purpose,depart_time_timestamp,arrival_time_timestamp, arrive_date, arrival_time_hour, arrival_time_minute, depart_time_hour, depart_time_minute)%>%arrange(person_id, depart_time_timestamp, arrival_time_timestamp)%>%head(500)
+
+trip_rulesy_raw<-left_join(trip_raw, trip_rulesy, by='tripid', suffix=c('_before', '_after'))%>%
+  select(error_flag,person_id_before, day_id_before, day_id_after, tripnum_after, tripid,origin_purpose_before, origin_purpose_after, dest_purpose_before, dest_purpose_after, arrive_date_before, arrive_date_after,arrival_time_hour_before,arrival_time_minute_before,depart_time_hour_before, depart_time_minute_before, depart_time_timestamp, arrival_time_timestamp,depart_time_minute_after,origin_lng_before, origin_lat_before,dest_lng_before,dest_lng_after, dest_lat_before,dest_lat_after, mode_1_before, mode_1_after, trace_quality_flag_before, day_is_complete_a_before, day_is_complete_b_before)%>%arrange(person_id_before, arrive_date_before, arrival_time_hour_before, arrival_time_minute_before, depart_time_hour_before, depart_time_minute_before)%>%head(500)
+
+
+```
+
+
+select all records of a person who has a particular error mode
+```{r}
+# first find the person ids of  trips with the error code
+
+##trip_rulesy%>%s
+
+
+```
+
+
+
+### function to summarize a variable across flags
+```{r}
+var_error_compare<-function(df, dfname, id, var_name){
+  #id=!!ensym(id)
+  #var_name=!!ensym(var_name)
+  df<-df%>%filter(!is.na(error_flag))
+  df_cols<-df%>%select(!!ensym(id), !!ensym(var_name), error_flag)
+  vals<- values%>%filter(variable==sym(var_name))
+  df_cols<-df_cols%>%
+    left_join(vals, by=join_by(!!ensym(var_name)==value))
+  df_summary<-df_cols%>%
+              group_by(final_label, error_flag)%>%
+              count()
+  df_summary<-df_summary%>%
+              rename(!!quo_name(dfname):=n)
+  
+}
+```
+
+
+```{r}
+
+trip_mode_data_rulesy<-var_error_compare(df=trip_rulesy,dfname='trip_rulesy',id='tripid', var_name='mode_type')
+
+```
+
+### Error flags by mode
+There are very high numbers of walk, transit trips with the change mode purpose and/or missing next trip link or missing prior trip link.
+This is why we think there is some problem with trip linking.
+```{r}
+ggplot(data=trip_mode_data_rulesy, aes(x=error_flag, y=trip_rulesy, fill= final_label))+
+
+  geom_bar(stat="identity")+ theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  
+```
+
+
+
+
+#Summaries of change mode purpose trips only, post-rulesy
+
+```{r}
+
+example_recs_change_mode<-trip_rulesy_raw%>%filter(error_flag=='"change mode" purpose')
+
+example_recs_missing_trip_link<-trip_rulesy_raw%>%filter(error_flag=='missing next trip link')
+```
+
+### function to summarize avariable across a single flag
+```{r}
+var_compare<-function(df, id, var_name){
+  #id=!!ensym(id)
+  #var_name=!!ensym(var_name)
+
+  df_cols<-df%>%select(!!ensym(id), !!ensym(var_name))
+  vals<- values%>%filter(variable==sym(var_name))
+  df_cols<-df_cols%>%
+    left_join(vals, by=join_by(!!ensym(var_name)==value))
+  df_summary<-df_cols%>%
+              group_by(final_label)%>%
+              count()
+
+  
+}
+```
+
+

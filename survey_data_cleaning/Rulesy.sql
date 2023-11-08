@@ -119,6 +119,51 @@ GO
 			[analyst_merged] smallint NULL,
 			[analyst_split] smallint NULL,
 			[analyst_split_loop] smallint null,
+			[day_id] [bigint] NOT NULL,
+			[travel_day] [int] NOT NULL,
+			[travel_date] [date] NOT NULL,
+			[travel_dow] [int] NOT NULL,
+			[day_iscomplete] [smallint] NULL,
+			[depart_date] [date] NOT NULL,
+			[depart_dow] [int] NOT NULL,
+			[depart_time_hour] [int] NOT NULL,
+			[depart_time_minute] [int] NOT NULL,
+			[depart_time_second] [int] NOT NULL,
+			[arrive_date] [date] NOT NULL,
+			[arrive_dow] [int] NOT NULL,
+			[arrival_time_hour] [int] NOT NULL,
+			[arrival_time_minute] [int] NOT NULL,
+			[arrival_time_second] [int] NOT NULL,
+			[o_in_region] [int] NOT NULL,
+			[o_puma10] [int] NULL,
+			[o_bg] [bigint] NULL,
+			[d_in_region] [int] NOT NULL,
+			[d_puma10] [int] NULL,
+			[d_bg] [bigint] NULL,
+			[distance_meters] [float] NULL,
+			[duration_minutes] [int] NOT NULL,
+			[duration_seconds] [int] NOT NULL,
+			[speed_flag] [int] NOT NULL,
+			[dwell_mins] [float] NOT NULL,
+			[days_first_trip] [int] NOT NULL,
+			[days_last_trip] [int] NOT NULL,
+			[mode_other_specify] [nvarchar](1000)  NULL,
+			[is_transit] [int] NOT NULL,
+			[hhmember10] [int] NOT NULL,
+			[hhmember11] [int] NOT NULL,
+			[hhmember12] [int] NOT NULL,
+			[taxi_cost_known] [int] NOT NULL,
+			[taxi_cost_int] [int] NULL,
+			[flag_teleport] [int] NOT NULL,
+			[pt_density] [float] NULL,
+			[point_dist_index] [float] NULL,
+			[trip_weight] [int] NOT NULL,
+			[survey_year] [int] NOT NULL,
+			[day_is_complete_a] [smallint] NULL,
+			[day_is_complete_b] [smallint] NULL,
+			[hh_day_iscomplete] [smallint] NULL,
+			[hh_day_iscomplete_a] [smallint] NULL,
+			[hh_day_iscomplete_b] [smallint] NULL,
 			[psrc_comment] NVARCHAR(255) NULL,
 			[psrc_resolved] smallint NULL,
 			PRIMARY KEY CLUSTERED ([recid])
@@ -183,7 +228,52 @@ GO
 			,[analyst_merged]
 			,[analyst_split]
 			,[analyst_split_loop]
-			)
+			,[day_id]
+			,[travel_day]
+			,[travel_date] 
+			,[travel_dow] 
+			,[day_iscomplete]
+			,[depart_date] 
+			,[depart_dow]
+			,[depart_time_hour]
+			,[depart_time_minute]
+			,[depart_time_second]
+			,[arrive_date]
+			,[arrive_dow]
+			,[arrival_time_hour]
+			,[arrival_time_minute]
+			,[arrival_time_second]
+			,[o_in_region]
+			,[o_puma10]
+			,[o_bg]
+			,[d_in_region]
+			,[d_puma10]
+			,[d_bg]
+			,[distance_meters]
+			,[duration_minutes]
+			,[duration_seconds]
+			,[speed_flag]
+			,[dwell_mins]
+			,[days_first_trip] 
+			,[days_last_trip]
+			,[mode_other_specify]
+			,[is_transit]
+			,[hhmember10]
+			,[hhmember11]
+			,[hhmember12]
+			,[taxi_cost_known]
+			,[taxi_cost_int]
+			,[flag_teleport]
+			,[pt_density]
+			,[point_dist_index]
+			,[trip_weight]
+			,[survey_year] 
+			,[day_is_complete_a]
+			,[day_is_complete_b]
+			,[hh_day_iscomplete]
+			,[hh_day_iscomplete_a]
+			,[hh_day_iscomplete_b]
+						)
 		SELECT
 			CAST(hhid AS decimal(19,0) )
 			,CAST(person_id AS decimal(19,0) )
@@ -242,6 +332,51 @@ GO
 			,CAST(analyst_merged AS smallint)
 			,CAST(analyst_split AS smallint)
 			,CAST(analyst_split_loop AS smallint)
+			,CAST(day_id AS bigint)
+			,CAST(travel_day AS smallint)
+			,CAST(travel_date AS date)
+			,CAST(travel_dow AS  smallint)
+			,CAST(day_iscomplete AS smallint)
+			,CAST(depart_date as date)
+			,CAST(depart_dow as smallint)
+			,CAST(depart_time_hour as smallint)
+			,CAST(depart_time_minute as smallint)
+			,CAST(depart_time_second as smallint)
+			,CAST(arrive_date as date)
+			,CAST(arrive_dow as smallint)
+			,CAST(arrival_time_hour as smallint)
+			,CAST(arrival_time_minute as smallint)
+			,CAST(arrival_time_second as smallint)
+			,CAST(o_in_region as int)
+			,CAST(o_puma10 as int)
+			,CAST(o_bg as bigint)
+			,CAST(d_in_region as int)
+			,CAST(d_puma10 as int)
+			,CAST(d_bg as bigint)
+			,CAST(distance_meters as float)
+			,CAST(duration_minutes as int)
+			,CAST(duration_seconds as int)
+			,CAST(speed_flag as int)
+			,CAST(dwell_mins as float)
+			,CAST(days_first_trip as int)
+			,CAST(days_last_trip as int)
+			,CAST(mode_other_specify as nvarchar(1000))
+			,CAST(is_transit as int)
+			,CAST(hhmember10 as int)
+			,CAST(hhmember11 as int)
+			,CAST(hhmember12 as int)
+			,CAST(taxi_cost_known as int)
+			,CAST(taxi_cost_int as int)
+			,CAST(flag_teleport as int)
+			,CAST(pt_density as float)
+			,CAST(point_dist_index as float)
+			,CAST(trip_weight as int)
+			,CAST(survey_year as int)
+			,CAST(day_is_complete_a as smallint)
+			,CAST(day_is_complete_b as smallint)
+			,CAST(hh_day_iscomplete as smallint)
+			,CAST(hh_day_iscomplete_a as smallint)
+			,CAST(hh_day_iscomplete_b as smallint)
 			FROM HouseholdTravelSurvey2023.[combined_data].[v_trip]
 			ORDER BY tripid;
 		GO
@@ -547,7 +682,8 @@ GO
 		AS
 		BEGIN
 		WITH tripnum_rev(recid, person_id, tripnum) AS
-			(SELECT t0.recid, t0.person_id, ROW_NUMBER() OVER(PARTITION BY t0.person_id ORDER BY t0.depart_time_timestamp ASC) AS tripnum 
+			(SELECT t0.recid, t0.person_id, ROW_NUMBER() OVER(PARTITION BY t0.person_id ORDER BY t0.depart_time_timestamp ASC, 
+			t0.arrival_time_timestamp ASC) AS tripnum 
 			 	FROM HHSurvey.Trip AS t0 
 				WHERE t0.person_id = CASE WHEN @target_person_id IS NULL THEN t0.person_id ELSE @target_person_id END)
 		UPDATE t
