@@ -693,7 +693,7 @@ GO
 		END
 		GO
 		EXECUTE HHSurvey.tripnum_update;
-        SELECT * from HHSurvey.Trip where person_id = 2300013702 
+
 	-- Recalculation of derived fields
 
 		DROP PROCEDURE IF EXISTS HHSurvey.recalculate_after_edit;
@@ -1097,21 +1097,15 @@ GO
 		SELECT next_trip.*, CAST(0 AS int) AS trip_link INTO #trip_ingredient
 		FROM HHSurvey.Trip as trip 
 			JOIN HHSurvey.Trip AS next_trip ON trip.person_id=next_trip.person_id AND trip.tripnum + 1 = next_trip.tripnum
-		WHERE 	--trip.dest_is_home IS NULL 																			-- destination of preceding leg isn't home
-			--AND trip.dest_is_work IS NULL																			-- destination of preceding leg isn't work
-			--AND trip.travelers_total = next_trip.travelers_total	 												-- traveler # the same								
-			--AND (trip.mode_1<>next_trip.mode_1 OR EXISTS (SELECT 1 FROM HHSurvey.transitmodes AS tm WHERE tm.mode_id=trip.mode_1 ))	--either change modes or switch transit lines                     
-			trip.dest_purpose = 60 AND next_trip.origin_purpose =60
-			--AND DATEDIFF(Minute, trip.arrival_time_timestamp, next_trip.depart_time_timestamp) < 30) -- change modes under 30min dwell
-				  --OR (trip.dest_purpose = next_trip.dest_purpose AND trip.dest_purpose NOT BETWEEN 45 AND 48 AND DATEDIFF(Minute, trip.arrival_time_timestamp, next_trip.depart_time_timestamp) < 15)  -- other non-PUDO purposes if identical, under 15min dwell
-				  --OR (next_trip.has_access=1 OR next_trip.is_egress=1)    -- broken out by RSG
-	    ORDER BY tripnum
-		
-		SELECT * FROM #trip_ingredient
-		WHERE person_id=2300013702 AND daynum=3
-		ORDER BY tripnum
-		
-	
+		WHERE 	trip.dest_is_home IS NULL 																			-- destination of preceding leg isn't home
+			AND trip.dest_is_work IS NULL																			-- destination of preceding leg isn't work
+			AND trip.travelers_total = next_trip.travelers_total	 												-- traveler # the same								
+			AND (trip.mode_1<>next_trip.mode_1 OR EXISTS (SELECT 1 FROM HHSurvey.transitmodes AS tm WHERE tm.mode_id=trip.mode_1 ))	--either change modes or switch transit lines                     
+			AND ((trip.dest_purpose = 60 AND DATEDIFF(Minute, trip.arrival_time_timestamp, next_trip.depart_time_timestamp) < 30) -- change modes under 30min dwell
+				  OR (trip.dest_purpose = next_trip.dest_purpose AND trip.dest_purpose NOT BETWEEN 45 AND 48 AND DATEDIFF(Minute, trip.arrival_time_timestamp, next_trip.depart_time_timestamp) < 15)  -- other non-PUDO purposes if identical, under 15min dwell
+				  OR (next_trip.has_access=1 OR next_trip.is_egress=1)    -- broken out by RSG
+				);
+
 		/* Less restricted linkages for 'mode change' only 
 		SELECT next_trip.*, CAST(0 AS int) AS trip_link INTO #trip_ingredient  
 			FROM HHSurvey.Trip as trip  
@@ -1254,8 +1248,6 @@ GO
 			FROM HHSurvey.Trip AS t JOIN #linked_trips AS lt ON t.person_id = lt.person_id AND t.tripnum = lt.trip_link;
 
 		--move the ingredients to another named table so this procedure can be re-run as sproc during manual cleaning
-		
-
 
 		DELETE FROM #trip_ingredient
 		OUTPUT deleted.* INTO HHSurvey.trip_ingredients_done
@@ -1339,10 +1331,6 @@ GO
 		--temp tables should disappear when the spoc ends, but to be tidy we explicitly delete them.
 		DROP TABLE IF EXISTS #trip_ingredient
 		DROP TABLE IF EXISTS #linked_trips
-
-		SELECT * FROM HHSurvey.Trip
-		WHERE person_id=2300013702 AND daynum=3
-		ORDER BY tripnum
 
 		/*END
 
@@ -1757,11 +1745,11 @@ GO
  
 			UNION ALL SELECT t.recid, t.person_id, t.tripnum,					                        'missing next trip link' AS error_flag
 			FROM trip_ref AS t JOIN HHSurvey.Trip AS t_next ON  t.person_id = t_next.person_id AND t.tripnum + 1 = t_next.tripnum
-				WHERE ROUND(t.dest_lat,1) <> ROUND(t_next.origin_lat,1)
+				WHERE ABS(t.dest_geog.STDistance(t_next.origin_geog)) > 500  --500m difference or more
 
-			--UNION ALL SELECT t_next.recid, t_next.person_id, t_next.tripnum,	              	           'missing prior trip link' AS error_flag
-			--FROM trip_ref AS t JOIN HHSurvey.Trip AS t_next ON t.person_id = t_next.person_id AND  t.tripnum + 1 = t_next.tripnum
-			--	WHERE ABS(t.dest_geog.STDistance(t_next.origin_geog)) > 500	--500m difference or more			
+			UNION ALL SELECT t_next.recid, t_next.person_id, t_next.tripnum,	              	           'missing prior trip link' AS error_flag
+			FROM trip_ref AS t JOIN HHSurvey.Trip AS t_next ON t.person_id = t_next.person_id AND  t.tripnum + 1 = t_next.tripnum
+				WHERE ABS(t.dest_geog.STDistance(t_next.origin_geog)) > 500	--500m difference or more			
 
 			UNION ALL SELECT t.recid, t.person_id, t.tripnum,	              	 			 			 '"change mode" purpose' AS error_flag	
 				FROM trip_ref AS t JOIN HHSurvey.Trip AS t_next ON t.person_id = t_next.person_id AND  t.tripnum + 1 = t_next.tripnum
