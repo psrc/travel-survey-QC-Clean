@@ -672,7 +672,7 @@ GO
 	-- end of trigger creation
 		
 	-- Enable the audit trail/logger
-		ALTER TABLE HHSurvey.Trip ENABLE TRIGGER [tr_trip]
+	--	ALTER TABLE HHSurvey.Trip ENABLE TRIGGER [tr_trip]
 
 	-- Tripnum must be sequential or later steps will fail. Create procedure and employ where required.
 		DROP PROCEDURE IF EXISTS HHSurvey.tripnum_update;
@@ -946,7 +946,7 @@ GO
 				SET t.dest_purpose = 1,  t.revision_code = CONCAT(t.revision_code,'5,') 
 				FROM HHSurvey.Trip AS t 
 				WHERE ( t.dest_purpose in(SELECT flag_value FROM HHSurvey.NullFlags)
-						or t.dest_purpose=97
+						or t.dest_purpose IN(97,60)
 						)
 					AND t.dest_is_home = 1;
 
@@ -954,7 +954,7 @@ GO
 				SET t.dest_purpose = 10, t.revision_code = CONCAT(t.revision_code,'5,') 
 				FROM HHSurvey.Trip AS t 
 				WHERE ( t.dest_purpose in(SELECT flag_value FROM HHSurvey.NullFlags)
-						or t.dest_purpose=97
+						or t.dest_purpose IN(97,60)
 						)
 					AND t.dest_is_work = 1;
 
@@ -1072,12 +1072,12 @@ GO
 		*/
 		UPDATE HHSurvey.Trip
 				SET modes = Elmer.dbo.TRIM(Elmer.dbo.rgx_replace(
-							STUFF(	COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_acc) THEN trip.mode_acc ELSE NULL END AS nvarchar), '') +
+							STUFF(	COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_acc) AND trip.is_access=0 THEN trip.mode_acc ELSE NULL END AS nvarchar), '') +
 									COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_1)	  THEN trip.mode_1 	 ELSE NULL END AS nvarchar), '') + 
 									COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_2)	  THEN trip.mode_2 	 ELSE NULL END AS nvarchar), '') + 
 									COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_3)   THEN trip.mode_3 	 ELSE NULL END AS nvarchar), '') + 
 									COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_4)   THEN trip.mode_4 	 ELSE NULL END AS nvarchar), '') + 
-									COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_egr) THEN trip.mode_egr ELSE NULL END AS nvarchar), ''), 1, 1, ''),
+									COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_egr) AND trip.is_access=0 THEN trip.mode_egr ELSE NULL END AS nvarchar), ''), 1, 1, ''),
 							'(-?\b\d+\b),(?=\b\1\b)','',1));							
 
 		-- remove component records into separate table, starting w/ 2nd component (i.e., first is left in trip table).  The criteria here determine which get considered components.
@@ -1100,7 +1100,7 @@ GO
 		WHERE 	trip.dest_is_home IS NULL 																			-- destination of preceding leg isn't home
 			AND trip.dest_is_work IS NULL																			-- destination of preceding leg isn't work
 			AND trip.travelers_total = next_trip.travelers_total	 												-- traveler # the same								
-			AND (trip.mode_1<>next_trip.mode_1 OR EXISTS (SELECT 1 FROM HHSurvey.transitmodes AS tm WHERE tm.mode_id=trip.mode_1 ))	--either change modes or switch transit lines                     
+			AND ((trip.mode_1<>next_trip.mode_1 AND trip.dest_purpose <> 60) OR EXISTS (SELECT 1 FROM HHSurvey.transitmodes AS tm WHERE tm.mode_id=trip.mode_1 ))	--either change modes or switch transit lines                     
 			AND ((trip.dest_purpose = 60 AND DATEDIFF(Minute, trip.arrival_time_timestamp, next_trip.depart_time_timestamp) < 30) -- change modes under 30min dwell
 				  OR (trip.dest_purpose = next_trip.dest_purpose AND trip.dest_purpose NOT BETWEEN 45 AND 48 AND DATEDIFF(Minute, trip.arrival_time_timestamp, next_trip.depart_time_timestamp) < 15)  -- other non-PUDO purposes if identical, under 15min dwell
 				  OR (next_trip.has_access=1 OR next_trip.is_egress=1)    -- broken out by RSG
@@ -1141,11 +1141,11 @@ GO
 			(SELECT DISTINCT ti_wndw2.person_id, ti_wndw2.trip_link, Elmer.dbo.TRIM(Elmer.dbo.rgx_replace(
 				STUFF((SELECT ',' + ti2.modes				--non-adjacent repeated modes, i.e. suggests a loop trip
 					FROM #trip_ingredient AS ti2
-					WHERE ti2.person_id = ti_wndw2.person_id AND ti2.trip_link = ti_wndw2.trip_link
+					WHERE ti2.person_id = ti_wndw2.person_id AND ti2.trip_link = ti_wndw2.trip_link 
 					GROUP BY ti2.modes
 					ORDER BY ti_wndw2.person_id DESC, ti_wndw2.tripnum DESC
 					FOR XML PATH('')), 1, 1, NULL),'(\b\d+\b),(?=\1)','',1)) AS modes	
-				FROM #trip_ingredient as ti_wndw2),
+			FROM #trip_ingredient as ti_wndw2),
 		cte2 AS 
 			(SELECT ti3.person_id, ti3.trip_link 			--sets with more than 6 trip components
 				FROM #trip_ingredient as ti3 GROUP BY ti3.person_id, ti3.trip_link
@@ -1153,7 +1153,7 @@ GO
 			/*UNION ALL SELECT ti4.person_id, ti4.trip_link --sets with two items that each denote a separate trip
 				FROM #trip_ingredient as ti4 GROUP BY ti4.person_id, ti4.trip_link
 				HAVING sum(CASE WHEN ti4.change_vehicles = 1 THEN 1 ELSE 0 END) > 1*/
-			UNION ALL SELECT cte_b.person_id, cte_b.trip_link 	--sets with a pair of modes repeating in reverse (i.e., return trip)
+			UNION ALL SELECT cte_b.person_id, cte_b.trip_link	--sets with a pair of modes repeating in reverse (i.e., return trip)
 				FROM cte_b
 				WHERE Elmer.dbo.rgx_find(cte_b.modes,'\b(\d+),(\d+)\b,.+(?=\2,\1)',1)=1)
 		UPDATE ti
@@ -1649,7 +1649,7 @@ GO
 				WHERE DATEDIFF(Day,(CASE WHEN DATEPART(Hour, t.arrival_time_timestamp) < 3 THEN DATEADD(Hour, -3, t.arrival_time_timestamp) ELSE t.arrival_time_timestamp END),
 								   (CASE WHEN DATEPART(Hour, t_next.arrival_time_timestamp) < 3 THEN DATEADD(Hour, -3, t_next.depart_time_timestamp) WHEN t_next.arrival_time_timestamp IS NULL THEN DATEADD(Day, 1, t.arrival_time_timestamp) ELSE t_next.depart_time_timestamp END)) = 1  -- or the next trip starts the next day after 3am)
 				AND t.dest_is_home IS NULL 
-				AND t.dest_purpose NOT IN(1,34,52,55,62,97) 
+				AND t.dest_purpose NOT IN(1,34,52,55,62,97,150,152) 
 				--AND Elmer.dbo.rgx_find(t.psrc_comment,'ADD RETURN HOME \d?\d:\d\d',1) = 0
 				AND t.dest_geog.STDistance(h.home_geog) > 300
 				AND NOT EXISTS (SELECT 1 FROM #dayends AS de WHERE t.person_id = de.person_id AND t.dest_geog.STDistance(de.loc_geog) < 300)
