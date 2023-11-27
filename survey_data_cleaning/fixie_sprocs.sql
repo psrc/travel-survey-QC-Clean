@@ -34,15 +34,15 @@ GO
 				FROM HHSurvey.trip AS t JOIN cte ON 1 = 1
 				WHERE EXISTS (SELECT 1 FROM #recid_list AS rid WHERE rid.recid = t.recid);
 			
-			DECLARE @personid decimal(19,0) = NULL
-			SET @personid = (SELECT personid FROM #trip_ingredient GROUP BY personid);
+			DECLARE @person_id decimal(19,0) = NULL
+			SET @person_id = (SELECT person_id FROM #trip_ingredient GROUP BY person_id);
 
 			EXECUTE HHSurvey.link_trips;
-			EXECUTE HHSurvey.tripnum_update @personid;
-			EXECUTE HHSurvey.generate_error_flags @personid;
+			EXECUTE HHSurvey.tripnum_update @person_id;
+			EXECUTE HHSurvey.generate_error_flags @person_id;
 			DROP TABLE IF EXISTS #recid_list;
 			DROP TABLE IF EXISTS #trip_ingredient;
-			SET @personid = NULL
+			SET @person_id = NULL
 			SET @recid_list = NULL
 			END
 			GO
@@ -54,20 +54,20 @@ GO
 			CREATE PROCEDURE HHSurvey.unlink_via_id
 				@ref_recid int = NULL
 			AS BEGIN
-				DECLARE @ref_personid decimal(19,0) = NULL,
+				DECLARE @ref_person_id decimal(19,0) = NULL,
 						@ref_starttime DATETIME2 = NULL,
 						@ref_endtime DATETIME2 = NULL,
 						@ref_triplink int = NULL
 				SET NOCOUNT OFF;
 
-				SET @ref_personid = (SELECT t.personid FROM HHSurvey.Trip AS t WHERE t.recid = @ref_recid);
+				SET @ref_person_id = (SELECT t.person_id FROM HHSurvey.Trip AS t WHERE t.recid = @ref_recid);
 				SET @ref_starttime = (SELECT t.depart_time_timestamp FROM HHSurvey.Trip AS t WHERE t.recid = @ref_recid);
 				SET @ref_endtime = (SELECT t.arrival_time_timestamp FROM HHSurvey.Trip AS t WHERE t.recid = @ref_recid);
 
-				WITH cte AS (SELECT tid.personid, tid.trip_link, min(tid.depart_time_timestamp) AS start_time, max(tid.arrival_time_timestamp) AS end_time 
-							FROM HHSurvey.trip_ingredients_done AS tid WHERE tid.personid = @ref_personid GROUP BY tid.personid, tid.trip_link)
+				WITH cte AS (SELECT tid.person_id, tid.trip_link, min(tid.depart_time_timestamp) AS start_time, max(tid.arrival_time_timestamp) AS end_time 
+							FROM HHSurvey.trip_ingredients_done AS tid WHERE tid.person_id = @ref_person_id GROUP BY tid.person_id, tid.trip_link)
 				SELECT cte.trip_link INTO #FoundTripLink
-					FROM cte JOIN HHSurvey.Trip AS t ON cte.start_time = t.depart_time_timestamp AND cte.end_time = t.arrival_time_timestamp AND cte.personid = t.personid
+					FROM cte JOIN HHSurvey.Trip AS t ON cte.start_time = t.depart_time_timestamp AND cte.end_time = t.arrival_time_timestamp AND cte.person_id = t.person_id
 					GROUP BY cte.trip_link;
 
 				SET @ref_triplink = (SELECT trip_link FROM #FoundTripLink)
@@ -80,243 +80,231 @@ GO
 
 					SET IDENTITY_INSERT HHSurvey.Trip ON;
 					INSERT INTO HHSurvey.Trip (
-						recid
-						,hhid
-						,personid
-						,pernum
-						,tripid
-						,tripnum
-						,traveldate
-						,daynum
-						,dayofweek
-						,hhgroup
-					/*	,copied_trip
-						,completed_at
-						,revised_at
-						,revised_count
-					*/	,svy_complete
-						,depart_time_mam
-						,depart_time_hhmm
-						,depart_time_timestamp
-						,arrival_time_mam
-						,arrival_time_hhmm
-						,arrival_time_timestamp
-						,origin_name
-						,origin_lat
-						,origin_lng
-						,dest_name
-						,dest_lat
-						,dest_lng
-						,trip_path_distance
-						,google_duration
-						,reported_duration
-					--	,travel_time
-						,hhmember1
-						,hhmember2
-						,hhmember3
-						,hhmember4
-						,hhmember5
-						,hhmember6
-						,hhmember7
-						,hhmember8
-						,hhmember9
-						,travelers_hh
-						,travelers_nonhh
-						,travelers_total
-						,origin_purpose
-				--		,o_purpose_other
+						 [recid]
+						,[hhid]
+						,[person_id]
+						,[pernum]
+						,[tripid]
+						,[tripnum]
+						,[traveldate]
+						,[daynum]
+						,[copied_trip]
+						,[svy_complete]
+						,[depart_time_timestamp]
+						,[arrival_time_timestamp]
+						,[origin_lat]
+						,[origin_lng]
+						,[origin_label]
+						,[dest_lat]
+						,[dest_lng]
+						,[dest_label]
+						,[distance_miles]
+						,[travel_time]
+						,[hhmember1]
+						,[hhmember2]
+						,[hhmember3]
+						,[hhmember4]
+						,[hhmember5]
+						,[hhmember6]
+						,[hhmember7]
+						,[hhmember8]
+						,[hhmember9]
+						,[travelers_hh]
+						,[travelers_nonhh]
+						,[travelers_total]
+						,[origin_purpose]
 						,origin_purpose_cat
-						,dest_purpose
-				--		,dest_purpose_other
-						,dest_purpose_cat
-						,mode_1
-				/*		,mode_2
-						,mode_3
-						,mode_4
-						,mode_type
-						,driver
-				*/		,pool_start
-						,change_vehicles
-				/*		,park_ride_area_start
-						,park_ride_area_end
-						,park_ride_lot_start
-						,park_ride_lot_end
-				*/		,toll
-						,toll_pay
-				--		,taxi_type
-						,taxi_pay
-				/*		,bus_type
-						,bus_pay
-						,bus_cost_dk
-						,ferry_type
-						,ferry_pay
-						,ferry_cost_dk
-						,air_type
-						,air_pay
-						,airfare_cost_dk
-				*/		,mode_acc
-						,mode_egr
-				/*		,park
-						,park_type
-						,park_pay
-						,transit_system_1
-						,transit_system_2
-						,transit_system_3
-						,transit_system_4
-						,transit_system_5
-						,transit_system_6
-						,transit_line_1
-						,transit_line_2
-						,transit_line_3
-						,transit_line_4
-						,transit_line_5
-						,transit_line_6
-				*/		,speed_mph
-				/*		,user_added
-						,user_merged
-						,user_split
-						,analyst_merged
-						,analyst_split
-						,analyst_split_loop
-						,quality_flag
-						,nonproxy_derived_trip
-				*/		,psrc_comment
-						,psrc_resolved
-						,origin_geog
-						,dest_geog
-						,dest_county
-						,dest_city
-						,dest_zip
+						,[dest_purpose]
+						,[dest_purpose_other]
+						,dest_purpose_cat			
+						,[mode_1]
+						,[mode_2]
+						,[mode_3]
+						,[mode_4]
+						,mode_type			
+						,[driver]
+						,[change_vehicles]
+						,[is_access]
+						,[is_egress]
+						,[has_access]
+						,[has_egress]			
+						,[mode_acc]
+						,[mode_egr]			
+						,[speed_mph]
+						,[trace_quality_flag]
+						,[user_added]
+						,[user_merged]
+						,[user_split]
+						,[analyst_merged]
+						,[analyst_split]
+						,[analyst_split_loop]
+						,[day_id]
+						,[travel_day]
+						,[travel_date] 
+						,[travel_dow] 
+						,[day_iscomplete]
+						,[depart_date] 
+						,[depart_dow]
+						,[depart_time_hour]
+						,[depart_time_minute]
+						,[depart_time_second]
+						,[arrive_date]
+						,[arrive_dow]
+						,[arrival_time_hour]
+						,[arrival_time_minute]
+						,[arrival_time_second]
+						,[o_in_region]
+						,[o_puma10]
+						,[o_bg]
+						,[d_in_region]
+						,[d_puma10]
+						,[d_bg]
+						,[distance_meters]
+						,[duration_minutes]
+						,[duration_seconds]
+						,[speed_flag]
+						,[dwell_mins]
+						,[days_first_trip] 
+						,[days_last_trip]
+						,[mode_other_specify]
+						,[is_transit]
+						,[hhmember10]
+						,[hhmember11]
+						,[hhmember12]
+						,[taxi_cost_known]
+						,[taxi_cost_int]
+						,[flag_teleport]
+						,[pt_density]
+						,[point_dist_index]
+						,[trip_weight]
+						,[survey_year] 
+						,[day_is_complete_a]
+						,[day_is_complete_b]
+						,[hh_day_iscomplete]
+						,[hh_day_iscomplete_a]
+						,[hh_day_iscomplete_b]
 						,dest_is_home
 						,dest_is_work
 						,modes
-				--		,transit_systems
-				--		,transit_lines
 						,psrc_inserted
 						,revision_code)
 					SELECT recid
-						,hhid
-						,personid
-						,pernum
-						,tripid
-						,tripnum
-						,traveldate
-						,daynum
-						,dayofweek
-						,hhgroup
-					/*	,copied_trip
-						,completed_at
-						,revised_at
-						,revised_count
-					*/	,svy_complete
-						,depart_time_mam
-						,depart_time_hhmm
-						,depart_time_timestamp
-						,arrival_time_mam
-						,arrival_time_hhmm
-						,arrival_time_timestamp
-						,origin_name
-						,origin_lat
-						,origin_lng
-						,dest_name
-						,dest_lat
-						,dest_lng
-						,trip_path_distance
-						,google_duration
-						,reported_duration
-					--	,travel_time
-						,hhmember1
-						,hhmember2
-						,hhmember3
-						,hhmember4
-						,hhmember5
-						,hhmember6
-						,hhmember7
-						,hhmember8
-						,hhmember9
-						,travelers_hh
-						,travelers_nonhh
-						,travelers_total
-						,origin_purpose
-				--		,origin_purpose_other
+						,[hhid]
+						,[person_id]
+						,[pernum]
+						,[tripid]
+						,[tripnum]
+						,[traveldate]
+						,[daynum]
+						,[copied_trip]
+						,[svy_complete]
+						,[depart_time_timestamp]
+						,[arrival_time_timestamp]
+						,[origin_lat]
+						,[origin_lng]
+						,[origin_label]
+						,[dest_lat]
+						,[dest_lng]
+						,[dest_label]
+						,[distance_miles]
+						,[travel_time]
+						,[hhmember1]
+						,[hhmember2]
+						,[hhmember3]
+						,[hhmember4]
+						,[hhmember5]
+						,[hhmember6]
+						,[hhmember7]
+						,[hhmember8]
+						,[hhmember9]
+						,[travelers_hh]
+						,[travelers_nonhh]
+						,[travelers_total]
+						,[origin_purpose]
 						,origin_purpose_cat
-						,dest_purpose
-				--		,dest_purpose_other
-						,dest_purpose_cat
-						,mode_1
-				/*		,mode_2
-						,mode_3
-						,mode_4
-						,mode_type
-						,driver
-				*/		,pool_start
-						,change_vehicles
-				/*		,park_ride_area_start
-						,park_ride_area_end
-						,park_ride_lot_start
-						,park_ride_lot_end
-				*/		,toll
-						,toll_pay
-				--		,taxi_type
-						,taxi_pay
-				/*		,bus_type
-						,bus_pay
-						,bus_cost_dk
-						,ferry_type
-						,ferry_pay
-						,ferry_cost_dk
-						,air_type
-						,air_pay
-						,airfare_cost_dk
-				*/		,mode_acc
-						,mode_egr
-				/*		,park
-						,park_type
-						,park_pay
-						,transit_system_1
-						,transit_system_2
-						,transit_system_3
-						,transit_system_4
-						,transit_system_5
-						,transit_system_6
-						,transit_line_1
-						,transit_line_2
-						,transit_line_3
-						,transit_line_4
-						,transit_line_5
-						,transit_line_6
-				*/		,speed_mph
-				/*		,user_added
-						,user_merged
-						,user_split
-						,analyst_merged
-						,analyst_split
-						,analyst_split_loop
-						,quality_flag
-						,nonproxy_derived_trip
-				*/		,psrc_comment
-						,psrc_resolved
-						,origin_geog
-						,dest_geog
-						,dest_county
-						,dest_city
-						,dest_zip
+						,[dest_purpose]
+						,[dest_purpose_other]
+						,dest_purpose_cat			
+						,[mode_1]
+						,[mode_2]
+						,[mode_3]
+						,[mode_4]
+						,mode_type			
+						,[driver]
+						,[change_vehicles]
+						,[is_access]
+						,[is_egress]
+						,[has_access]
+						,[has_egress]			
+						,[mode_acc]
+						,[mode_egr]			
+						,[speed_mph]
+						,[trace_quality_flag]
+						,[user_added]
+						,[user_merged]
+						,[user_split]
+						,[analyst_merged]
+						,[analyst_split]
+						,[analyst_split_loop]
+						,[day_id]
+						,[travel_day]
+						,[travel_date] 
+						,[travel_dow] 
+						,[day_iscomplete]
+						,[depart_date] 
+						,[depart_dow]
+						,[depart_time_hour]
+						,[depart_time_minute]
+						,[depart_time_second]
+						,[arrive_date]
+						,[arrive_dow]
+						,[arrival_time_hour]
+						,[arrival_time_minute]
+						,[arrival_time_second]
+						,[o_in_region]
+						,[o_puma10]
+						,[o_bg]
+						,[d_in_region]
+						,[d_puma10]
+						,[d_bg]
+						,[distance_meters]
+						,[duration_minutes]
+						,[duration_seconds]
+						,[speed_flag]
+						,[dwell_mins]
+						,[days_first_trip] 
+						,[days_last_trip]
+						,[mode_other_specify]
+						,[is_transit]
+						,[hhmember10]
+						,[hhmember11]
+						,[hhmember12]
+						,[taxi_cost_known]
+						,[taxi_cost_int]
+						,[flag_teleport]
+						,[pt_density]
+						,[point_dist_index]
+						,[trip_weight]
+						,[survey_year] 
+						,[day_is_complete_a]
+						,[day_is_complete_b]
+						,[hh_day_iscomplete]
+						,[hh_day_iscomplete_a]
+						,[hh_day_iscomplete_b]
 						,dest_is_home
 						,dest_is_work
 						,modes
-				--		,transit_systems
-				--		,transit_lines
 						,psrc_inserted
 						,revision_code
 						FROM HHSurvey.trip_ingredients_done AS tid 
-						WHERE tid.personid = @ref_personid AND tid.trip_link = @ref_triplink;
+						WHERE tid.person_id = @ref_person_id AND tid.trip_link = @ref_triplink;
 
 					DELETE tid
 					FROM HHSurvey.trip_ingredients_done AS tid 
-					WHERE tid.personid = @ref_personid AND tid.trip_link = @ref_triplink;
+					WHERE tid.person_id = @ref_person_id AND tid.trip_link = @ref_triplink;
 
-					EXECUTE HHSurvey.recalculate_after_edit @ref_personid;
-					EXECUTE HHSurvey.generate_error_flags @ref_personid;
+					EXECUTE HHSurvey.recalculate_after_edit @ref_person_id;
+					EXECUTE HHSurvey.generate_error_flags @ref_person_id;
 				END
 					
 				DROP TABLE IF EXISTS #FoundTripLink;
@@ -339,12 +327,12 @@ GO
 			DROP TABLE IF EXISTS #tmpSplit;
 
 			WITH cte AS
-			(SELECT t.recid, t.tripid, t.personid, t.origin_geog, t.dest_geog, t.depart_time_timestamp, t.arrival_time_timestamp, t.trip_path_distance
+			(SELECT t.recid, t.tripid, t.person_id, t.origin_geog, t.dest_geog, t.depart_time_timestamp, t.arrival_time_timestamp, t.distance_miles
 				FROM HHSurvey.Trip AS t WHERE t.recid = @target_recid AND t.hhgroup = 1)
 			SELECT TOP 1 cte.*, c.lat, c.lng, c.point_geog, c.traceid, c.collected_at AS midpoint_arrival_timestamp, cnxt.collected_at AS midpoint_depart_timestamp,
 				c.point_geog.STDistance(cte.origin_geog)/1609.344 AS cfmiles2start, c.point_geog.STDistance(cte.dest_geog)/1609.344 AS cfmiles2end,
-				cte.trip_path_distance * (c.point_geog.STDistance(cte.origin_geog) / (c.point_geog.STDistance(cte.origin_geog) + c.point_geog.STDistance(cte.dest_geog))) AS to_midpoint_distance_approx,
-				cte.trip_path_distance * (1- c.point_geog.STDistance(cte.origin_geog) / (c.point_geog.STDistance(cte.origin_geog) + c.point_geog.STDistance(cte.dest_geog))) AS from_midpoint_distance_approx
+				cte.distance_miles * (c.point_geog.STDistance(cte.origin_geog) / (c.point_geog.STDistance(cte.origin_geog) + c.point_geog.STDistance(cte.dest_geog))) AS to_midpoint_distance_approx,
+				cte.distance_miles * (1- c.point_geog.STDistance(cte.origin_geog) / (c.point_geog.STDistance(cte.origin_geog) + c.point_geog.STDistance(cte.dest_geog))) AS from_midpoint_distance_approx
 			INTO #tmpSplit
 			FROM HHSurvey.Trace AS c 
 				JOIN cte ON c.tripid = cte.tripid 
@@ -372,19 +360,19 @@ GO
 
 			ELSE IF ((SELECT cfmiles2start FROM #tmpSplit) > 0.1 AND (SELECT cfmiles2end FROM #tmpSplit) > 0.1)
 				BEGIN
-				INSERT INTO HHSurvey.Trip (hhid, personid, pernum, hhgroup, travelers_hh, travelers_nonhh, travelers_total, modes, mode_1, 
+				INSERT INTO HHSurvey.Trip (hhid, person_id, pernum, hhgroup, travelers_hh, travelers_nonhh, travelers_total, modes, mode_1, 
 					hhmember1, hhmember2, hhmember3, hhmember4, hhmember5, hhmember6, hhmember7, hhmember8, hhmember9, 
 					dest_purpose,depart_time_timestamp, 
 					arrival_time_timestamp, 
-					trip_path_distance,
+					distance_miles,
 					origin_lat, origin_lng, origin_geog, 
 					dest_lat, dest_lng, dest_geog, dest_is_home, dest_is_work,
 					revision_code, psrc_inserted)			
-				SELECT  t.hhid, t.personid, t.pernum, t.hhgroup, t.travelers_hh, t.travelers_nonhh, t.travelers_total, t.modes, t.mode_1,
+				SELECT  t.hhid, t.person_id, t.pernum, t.hhgroup, t.travelers_hh, t.travelers_nonhh, t.travelers_total, t.modes, t.mode_1,
 						t.hhmember1, t.hhmember2, t.hhmember3, t.hhmember4, t.hhmember5, t.hhmember6, t.hhmember7, t.hhmember8, t.hhmember9, 
 					t.dest_purpose, DATEADD(Minute, -3, x.midpoint_depart_timestamp) AS depart_time_timestamp, 
 					t.arrival_time_timestamp, 
-					x.from_midpoint_distance_approx AS trip_path_distance,
+					x.from_midpoint_distance_approx AS distance_miles,
 					x.lat AS origin_lat, x.lng AS origin_lng, x.point_geog AS origin_geog, 
 					t.dest_lat, t.dest_lng, t.dest_geog, t.dest_is_home, t.dest_is_work,
 					14 AS revision_code, 1 AS psrc_inserted
@@ -395,7 +383,7 @@ GO
 					t.dest_lat = x.lat,
 					t.dest_lng = x.lng,
 					t.dest_geog = x.point_geog,
-					t.trip_path_distance = x.to_midpoint_distance_approx,
+					t.distance_miles = x.to_midpoint_distance_approx,
 					t.dest_purpose = 97,
 					t.revision_code = CONCAT(t.revision_code, '15,'),
 					t.psrc_comment = NULL,
@@ -404,10 +392,10 @@ GO
 				FROM HHSurvey.Trip AS t JOIN #tmpSplit AS x ON t.recid = x.recid;
 				END
 
-			DECLARE @split_personid decimal (19,0) = (SELECT x.personid FROM #tmpSplit AS x)
+			DECLARE @split_person_id decimal (19,0) = (SELECT x.person_id FROM #tmpSplit AS x)
 			DROP TABLE #tmpSplit;
-			EXECUTE HHSurvey.recalculate_after_edit @split_personid;
-			EXECUTE HHSurvey.generate_error_flags @split_personid;
+			EXECUTE HHSurvey.recalculate_after_edit @split_person_id;
+			EXECUTE HHSurvey.generate_error_flags @split_person_id;
 
 			END
 	*/
@@ -417,27 +405,27 @@ GO
 		DROP PROCEDURE IF EXISTS HHSurvey.insert_new_trip;
 		GO
 		CREATE PROCEDURE HHSurvey.insert_new_trip
-			@target_personid decimal = NULL, @target_recid int = NULL
+			@target_person_id decimal = NULL, @target_recid int = NULL
 		AS BEGIN
 		IF @target_recid IS NOT NULL 
 			BEGIN
-			INSERT INTO HHSurvey.Trip (hhid, personid, pernum, hhgroup, data_source, psrc_inserted, tripnum,
-				dest_lat, dest_lng, dest_name, origin_lat, origin_lng, depart_time_timestamp, arrival_time_timestamp, /*travel_time,*/ trip_path_distance,
+			INSERT INTO HHSurvey.Trip (hhid, person_id, pernum, psrc_inserted, tripnum,
+				dest_lat, dest_lng, dest_label, origin_lat, origin_lng, depart_time_timestamp, arrival_time_timestamp, /*travel_time,*/ distance_miles,
 				dest_purpose, dest_purpose_cat, modes, mode_acc, mode_1, /*mode_2, mode_3, mode_4, */mode_egr, travelers_hh, travelers_nonhh, travelers_total)
-			SELECT p.hhid, p.personid, p.pernum, p.hhgroup, t.data_source, 1, 0,
-				t.dest_lat, t.dest_lng, t.dest_name, t.origin_lat, t.origin_lng, t.depart_time_timestamp, t.arrival_time_timestamp, /*t.travel_time,*/ t.trip_path_distance,
+			SELECT p.hhid, p.person_id, p.pernum, 1, 0,
+				t.dest_lat, t.dest_lng, t.dest_label, t.origin_lat, t.origin_lng, t.depart_time_timestamp, t.arrival_time_timestamp, /*t.travel_time,*/ t.distance_miles,
 				t.dest_purpose, t.dest_purpose_cat, t.modes, t.mode_acc, t.mode_1, /*mode_2, mode_3, mode_4, */t.mode_egr, t.travelers_hh, t.travelers_nonhh, t.travelers_total
-			FROM HHSurvey.Person AS p CROSS JOIN HHSurvey.Trip AS t WHERE p.personid = @target_personid AND t.recid = @target_recid;
+			FROM HHSurvey.Person AS p CROSS JOIN HHSurvey.Trip AS t WHERE p.person_id = @target_person_id AND t.recid = @target_recid;
 			END
 		ELSE
 			BEGIN
-			INSERT INTO HHSurvey.Trip (hhid, personid, pernum, hhgroup, psrc_inserted)
-			SELECT p.hhid, p.personid, p.pernum, p.hhgroup, 1
-			FROM HHSurvey.Person AS p WHERE p.personid = @target_personid;
+			INSERT INTO HHSurvey.Trip (hhid, person_id, pernum, psrc_inserted)
+			SELECT p.hhid, p.person_id, p.pernum, 1
+			FROM HHSurvey.Person AS p WHERE p.person_id = @target_person_id;
 			END
 
-		EXECUTE HHSurvey.recalculate_after_edit @target_personid;
-		EXECUTE HHSurvey.generate_error_flags @target_personid;
+		EXECUTE HHSurvey.recalculate_after_edit @target_person_id;
+		EXECUTE HHSurvey.generate_error_flags @target_person_id;
 		END
 
 	--ADD REVERSE TRIP
@@ -450,8 +438,8 @@ GO
 		IF @target_recid IS NOT NULL 
 			BEGIN
 
-			DECLARE @target_personid decimal(19,0) = NULL;
-			SET @target_personid = (SELECT x.personid FROM HHSurvey.Trip AS x WHERE x.recid=@target_recid);
+			DECLARE @target_person_id decimal(19,0) = NULL;
+			SET @target_person_id = (SELECT x.person_id FROM HHSurvey.Trip AS x WHERE x.recid=@target_recid);
 
 			WITH cte AS (SELECT DATETIME2FROMPARTS(YEAR(t0.arrival_time_timestamp), 
 			   					  MONTH(t0.arrival_time_timestamp), 
@@ -459,20 +447,20 @@ GO
 								  CAST(Elmer.dbo.rgx_replace(@starttime,'(\d?\d):\d\d',LTRIM('$1'),1) AS int), 
 								  CAST(RIGHT(Elmer.dbo.rgx_replace(@starttime,':(\d\d)$',LTRIM('$1'),1),2) AS int), 0 ,0 ,0) AS depart_time_timestamp,
 								DATEDIFF(minute, t0.depart_time_timestamp, t0.arrival_time_timestamp) AS travel_time_elapsed,
-								t0.personid, t0.recid 
+								t0.person_id, t0.recid 
 							FROM HHSurvey.Trip AS t0 WHERE t0.recid=@target_recid)
-			INSERT INTO HHSurvey.Trip (hhid, personid, pernum, hhgroup, data_source, psrc_inserted, tripnum,
-				dest_lat, dest_lng, dest_name, origin_lat, origin_lng, origin_name, depart_time_timestamp, arrival_time_timestamp, /*travel_time,*/ trip_path_distance,
+			INSERT INTO HHSurvey.Trip (hhid, person_id, pernum, psrc_inserted, tripnum,
+				dest_lat, dest_lng, dest_label, origin_lat, origin_lng, origin_label, depart_time_timestamp, arrival_time_timestamp, /*travel_time,*/ distance_miles,
 				dest_purpose, dest_purpose_cat, origin_purpose, origin_purpose_cat, modes, mode_acc, mode_1, /*mode_2, mode_3, mode_4, */mode_egr, travelers_hh, travelers_nonhh, travelers_total)
-			SELECT t.hhid, t.personid, t.pernum, t.hhgroup, t.data_source, 1, 0,
-				t.origin_lat, t.origin_lng, t.origin_name, t.dest_lat, t.dest_lng, t.dest_name,
+			SELECT t.hhid, t.person_id, t.pernum, 1, 0,
+				t.origin_lat, t.origin_lng, t.origin_label, t.dest_lat, t.dest_lng, t.dest_label,
 				cte.depart_time_timestamp, DATEADD(minute, cte.travel_time_elapsed, cte.depart_time_timestamp) AS arrival_time_timestamp,
-				 /*t.travel_time,*/ t.trip_path_distance,
+				 /*t.travel_time,*/ t.distance_miles,
 				t.origin_purpose, t.origin_purpose_cat, t.dest_purpose, t.dest_purpose_cat, t.modes, t.mode_acc, t.mode_1, /*mode_2, mode_3, mode_4, */t.mode_egr, t.travelers_hh, t.travelers_nonhh, t.travelers_total
 			FROM HHSurvey.Trip AS t JOIN cte ON t.recid=cte.recid;
 
-			EXECUTE HHSurvey.recalculate_after_edit @target_personid;
-			EXECUTE HHSurvey.generate_error_flags @target_personid;
+			EXECUTE HHSurvey.recalculate_after_edit @target_person_id;
+			EXECUTE HHSurvey.generate_error_flags @target_person_id;
 			END
 		END
 
@@ -489,10 +477,8 @@ GO
 								 init_recid int,
 								 new_recid int,
 								 hhid int, 
-								 personid decimal(19,0),
+								 person_id decimal(19,0),
 								 pernum int,
-								 hhgroup int,
-								 [data_source] int,
 								 api_response nvarchar(255), 
 								 depart_time_timestamp datetime2,
 								 api_minutes float, 
@@ -505,8 +491,8 @@ GO
 								 api_miles float);
 
 		
-		INSERT INTO tmpApi2Home(init_recid, hhid, personid, pernum, hhgroup, [data_source], api_response, mode_1, depart_time_timestamp, origin_geog, home_geog, travelers_hh, travelers_nonhh, travelers_total)
-		SELECT t.recid AS init_recid, t.hhid, t.personid, t.pernum, t.hhgroup, t.[data_source],
+		INSERT INTO tmpApi2Home(init_recid, hhid, person_id, pernum, api_response, mode_1, depart_time_timestamp, origin_geog, home_geog, travelers_hh, travelers_nonhh, travelers_total)
+		SELECT t.recid AS init_recid, t.hhid, t.person_id, t.pernum,
 			   Elmer.dbo.route_mi_min(t.dest_geog.Long, t.dest_geog.Lat, h.home_geog.Long, h.home_geog.Lat, 
 			   						  CASE WHEN p.age <5 AND t.dest_purpose=6 AND t.dest_geog.STDistance(h.home_geog) < 1500 THEN 'walking' ELSE 'driving' END,'AlrP-dw5WRAoOohAABv5EhKtvgp_plo8hnfBM-FJsfvi9UdFCe0AdqT7oURMTGLC') AS api_response,
 			   CASE WHEN p.age <5 AND t.dest_purpose=6 AND t.dest_geog.STDistance(h.home_geog) < 1500 THEN 1 ELSE 16 END	AS mode_1, 
@@ -520,7 +506,7 @@ GO
 			   t.travelers_hh, 
 			   t.travelers_nonhh,
 			   t.travelers_total
-			FROM HHSurvey.Trip AS t JOIN HHSurvey.Household AS h ON t.hhid=h.hhid JOIN HHSurvey.Person AS p ON t.personid=p.personid
+			FROM HHSurvey.Trip AS t JOIN HHSurvey.Household AS h ON t.hhid=h.hhid JOIN HHSurvey.Person AS p ON t.person_id=p.person_id
 			WHERE Elmer.dbo.rgx_find(t.psrc_comment, 'ADD RETURN HOME \d?\d:\d\d',1) =1;
 
 		WITH cte AS (SELECT max(recid) AS max_recid FROM HHSurvey.Trip)	
@@ -532,10 +518,10 @@ GO
 
 		SET IDENTITY_INSERT hhts_cleaning.HHSurvey.Trip ON;
 
-		INSERT INTO	HHSurvey.Trip (recid, hhid, personid, pernum, hhgroup, [data_source], psrc_inserted, tripnum,
-				dest_lat, dest_lng, dest_name, origin_lat, origin_lng, depart_time_timestamp, arrival_time_timestamp, trip_path_distance,
+		INSERT INTO	HHSurvey.Trip (recid, hhid, person_id, pernum, psrc_inserted, tripnum,
+				dest_lat, dest_lng, dest_label, origin_lat, origin_lng, depart_time_timestamp, arrival_time_timestamp, distance_miles,
 				dest_purpose, mode_1, travelers_hh, travelers_nonhh, travelers_total)
-		SELECT  ta.new_recid AS recid, ta.hhid, ta.personid, ta.pernum, ta.hhgroup, ta.[data_source], 1, 0,
+		SELECT  ta.new_recid AS recid, ta.hhid, ta.person_id, ta.pernum, 1, 0,
 				ta.home_geog.Lat, ta.home_geog.Long, 'HOME', ta.origin_geog.Lat, ta.origin_geog.Long, depart_time_timestamp, 
 				DATEADD(Minute, ROUND(ta.api_minutes,0), ta.depart_time_timestamp) AS arrival_time_timestamp,
 				ta.api_miles, 1 AS dest_purpose, ta.mode_1, ta.travelers_hh, ta.travelers_nonhh, ta.travelers_total
@@ -548,7 +534,7 @@ GO
 			FROM HHSurvey.Trip AS t JOIN tmpApi2Home AS ta ON t.recid = ta.init_recid;
 		UPDATE nxt
 		 	SET nxt.origin_purpose=1, nxt.origin_lat=ta.home_geog.Lat, nxt.origin_lng=ta.home_geog.Long
-			FROM HHSurvey.Trip AS t JOIN HHSurvey.Trip AS nxt ON t.personid = nxt.personid AND t.tripnum + 1 = nxt.tripnum JOIN tmpApi2Home AS ta ON t.recid = ta.new_recid;
+			FROM HHSurvey.Trip AS t JOIN HHSurvey.Trip AS nxt ON t.person_id = nxt.person_id AND t.tripnum + 1 = nxt.tripnum JOIN tmpApi2Home AS ta ON t.recid = ta.new_recid;
 
 		EXECUTE HHSurvey.recalculate_after_edit;
 		EXECUTE HHSurvey.tripnum_update
@@ -582,7 +568,7 @@ GO
 								ELSE 'other' END) AS rider_status
 					FROM HHSurvey.Trip AS t3
 					JOIN cte_ref ON t3.hhid = cte_ref.hhid
-					JOIN HHSurvey.Person AS p1 ON t3.personid = p1.personid LEFT JOIN HHSurvey.AgeCategories AS ac1 ON ac1.AgeCode = p1.age
+					JOIN HHSurvey.Person AS p1 ON t3.person_id = p1.person_id LEFT JOIN HHSurvey.AgeCategories AS ac1 ON ac1.AgeCode = p1.age
 					WHERE ((cte_ref.depart_time_timestamp BETWEEN t3.depart_time_timestamp AND t3.arrival_time_timestamp) 
 							OR (cte_ref.arrival_time_timestamp BETWEEN t3.depart_time_timestamp AND t3.arrival_time_timestamp))),
 			cte_static AS
@@ -592,9 +578,9 @@ GO
 						CONCAT(CAST(t2.dest_lat AS NVARCHAR(20)),', ',CAST(t2.dest_lng AS NVARCHAR(20))) AS next_destination,
 						'n/a' AS rider_status
 					FROM HHSurvey.Trip AS t1
-					LEFT JOIN HHsurvey.Trip AS t2 ON t1.personid = t2.personid AND t1.tripnum + 1 = t2.tripnum
+					LEFT JOIN HHsurvey.Trip AS t2 ON t1.person_id = t2.person_id AND t1.tripnum + 1 = t2.tripnum
 					JOIN cte_ref ON t1.hhid = cte_ref.hhid AND NOT EXISTS (SELECT 1 FROM cte_mobile WHERE cte_mobile.pernum = t1.pernum)
-					JOIN HHSurvey.Person AS p2 ON t2.personid = p2.personid LEFT JOIN HHSurvey.AgeCategories AS ac2 ON ac2.AgeCode = p2.age
+					JOIN HHSurvey.Person AS p2 ON t2.person_id = p2.person_id LEFT JOIN HHSurvey.AgeCategories AS ac2 ON ac2.AgeCode = p2.age
 					WHERE (cte_ref.depart_time_timestamp > t1.arrival_time_timestamp AND cte_ref.arrival_time_timestamp < t2.depart_time_timestamp)
 						OR (cte_ref.depart_time_timestamp > t1.arrival_time_timestamp AND t2.depart_time_timestamp IS NULL)
 			)
@@ -629,13 +615,13 @@ GO
 		AS BEGIN
 		SET NOCOUNT OFF;
 		WITH cte AS
-		(SELECT tid0.personid, tid0.trip_link FROM HHSurvey.trip_ingredients_done AS tid0 WHERE tid0.recid = @target_recid)
-		SELECT tid.recid, tid.personid, tid.hhid, tid.tripnum, tid.daynum, tid.mode_1,
+		(SELECT tid0.person_id, tid0.trip_link FROM HHSurvey.trip_ingredients_done AS tid0 WHERE tid0.recid = @target_recid)
+		SELECT tid.recid, tid.person_id, tid.hhid, tid.tripnum, tid.daynum, tid.mode_1,
 			FORMAT(tid.depart_time_timestamp,N'hh\:mm tt','en-US') AS depart_dhm,
 			FORMAT(tid.arrival_time_timestamp,N'hh\:mm tt','en-US') AS arrive_dhm,
-			ROUND(tid.trip_path_distance,1) AS miles,
+			ROUND(tid.distance_miles,1) AS miles,
 			ROUND(tid.speed_mph,1) AS mph, 
-			CONCAT(tid.origin_purpose, '-',tpo.purpose) AS origin_purpose, tid.dest_name, CONCAT(tid.dest_purpose, '-',tpd.purpose) AS dest_purpose, 
+			CONCAT(tid.origin_purpose, '-',tpo.purpose) AS origin_purpose, tid.dest_label, CONCAT(tid.dest_purpose, '-',tpd.purpose) AS dest_purpose, 
 				CONCAT(CONVERT(varchar(30), (DATEDIFF(mi, tid.arrival_time_timestamp, t2.depart_time_timestamp) / 60)),'h',RIGHT('00'+CONVERT(varchar(30), (DATEDIFF(mi, tid.arrival_time_timestamp, CASE WHEN t2.recid IS NULL 
 										THEN DATETIME2FROMPARTS(DATEPART(year,tid.arrival_time_timestamp),DATEPART(month,tid.arrival_time_timestamp),DATEPART(day,tid.arrival_time_timestamp),3,0,0,0,0) 
 										ELSE t2.depart_time_timestamp END) % 60)),2),'m') AS duration_at_dest,
@@ -643,8 +629,8 @@ GO
 				CONCAT(CAST(tid.dest_lat AS VARCHAR(20)),', ',CAST(tid.dest_lng AS VARCHAR(20))) AS dest_coord,
 				tid.revision_code AS rc, tid.psrc_comment AS elevate_issue
 			FROM HHSurvey.trip_ingredients_done AS tid 
-				JOIN cte ON tid.trip_link = cte.trip_link AND tid.personid = cte.personid
-				LEFT JOIN HHSurvey.trip_ingredients_done as t2 ON tid.personid = t2.personid AND (tid.tripnum+1) = t2.tripnum
+				JOIN cte ON tid.trip_link = cte.trip_link AND tid.person_id = cte.person_id
+				LEFT JOIN HHSurvey.trip_ingredients_done as t2 ON tid.person_id = t2.person_id AND (tid.tripnum+1) = t2.tripnum
 				LEFT JOIN HHSurvey.trip_purpose AS tpo ON tid.origin_purpose=tpo.purpose_id
 				LEFT JOIN HHSurvey.trip_purpose AS tpd ON tid.dest_purpose=tpd.purpose_id
 		ORDER BY tid.tripnum ASC;

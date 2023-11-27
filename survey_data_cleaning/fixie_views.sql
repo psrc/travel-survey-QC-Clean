@@ -67,7 +67,7 @@ GO
 	AS
 	SELECT t.[recid]
 		   ,h.[hhid]
-		   ,t.[person_id]
+		   ,t.[person_id] 
 		   ,t.[pernum]
 		   ,t.[tripid]
 		   ,t.[tripnum]
@@ -124,21 +124,18 @@ GO
 			CASE WHEN p.employment  = 0 THEN 'No' ELSE 'Yes' END AS Works, 
 			CASE WHEN p.student = 1 THEN 'No' WHEN student = 2 THEN 'PT' WHEN p.student = 3 THEN 'FT' ELSE 'No' END AS Studies, 
 			CASE WHEN h.hhgroup=11 THEN 'rMove' ELSE 'rSurvey' END AS HHGroup
-		FROM HHSurvey.person AS p INNER JOIN HHSurvey.AgeCategories AS ac ON p.age = ac.agecode JOIN HHSurvey.Household AS h on h.hhid=p.hhid
+		FROM HHSurvey.Person AS p INNER JOIN HHSurvey.AgeCategories AS ac ON p.age = ac.agecode JOIN HHSurvey.Household AS h on h.hhid=p.hhid
 		WHERE EXISTS (SELECT 1 FROM HHSurvey.Trip AS t WHERE p.person_id = t.person_id);
 GO
 
 -- Person-level views for FixieUI Main forms, separated by staff so as to avoid editing conflicts
-		--DROP VIEW IF EXISTS HHSurvey.person_Abdi
-		DROP VIEW IF EXISTS HHSurvey.Person_Grant
-		--DROP VIEW IF EXISTS HHSurvey.Person_Mary
-		DROP VIEW IF EXISTS HHSurvey.person_Parastoo
-		--DROP VIEW IF EXISTS HHSurvey.person_Polina
+
+		DROP VIEW IF EXISTS HHSurvey.Person_Brandon
+		DROP VIEW IF EXISTS HHSurvey.Person_Suzanne
+		DROP VIEW IF EXISTS HHSurvey.person_Joanne
 		DROP VIEW IF EXISTS HHSurvey.person_Elevated
 		DROP VIEW IF EXISTS HHSurvey.Person_Mike
-		GO
-
-	
+		GO	
 
 		--alternate view for Mike
 		CREATE VIEW HHSurvey.person_Mike WITH SCHEMABINDING AS
@@ -146,7 +143,7 @@ GO
 			CASE WHEN p.employment  = 0 THEN 'No' ELSE 'Yes' END AS Works, 
 			CASE WHEN p.student = 1 THEN 'No' WHEN student = 2 THEN 'PT' WHEN p.student = 3 THEN 'FT' ELSE 'No' END AS Studies, 
 			CASE WHEN h.hhgroup = 11 THEN 'rMove' WHEN h.hhgroup IS NOT NULL THEN 'rSurvey' ELSE 'n/a' END AS HHGroup
-		FROM HHSurvey.person AS p INNER JOIN HHSurvey.AgeCategories AS ac ON p.age = ac.agecode JOIN HHSurvey.Household AS h on h.hhid=p.hhid 
+		FROM HHSurvey.Person AS p INNER JOIN HHSurvey.AgeCategories AS ac ON p.age = ac.agecode JOIN HHSurvey.Household AS h on h.hhid=p.hhid 
 		WHERE EXISTS (SELECT 1 FROM HHSurvey.trip_error_flags AS tef WHERE p.person_id = tef.person_id AND tef.error_flag='time overlap') OR
 		EXISTS (SELECT 1 FROM HHSurvey.Trip AS tm WHERE p.person_id = tm.person_id AND (tm.psrc_comment LIKE 'ADD%' OR tm.psrc_comment LIKE 'insert%'));
 		GO
@@ -157,92 +154,56 @@ GO
 			CASE WHEN p.employment  = 0 THEN 'No' ELSE 'Yes' END AS Works, 
 			CASE WHEN p.student = 1 THEN 'No' WHEN student = 2 THEN 'PT' WHEN p.student = 3 THEN 'FT' ELSE 'No' END AS Studies, 
 			CASE WHEN h.hhgroup = 11 THEN 'rMove' WHEN h.hhgroup IS NOT NULL THEN 'rSurvey' ELSE 'n/a' END AS HHGroup
-		FROM HHSurvey.person AS p INNER JOIN HHSurvey.AgeCategories AS ac ON p.age = ac.agecode JOIN HHSurvey.Household AS h on h.hhid=p.hhid
+		FROM HHSurvey.Person AS p INNER JOIN HHSurvey.AgeCategories AS ac ON p.age = ac.agecode JOIN HHSurvey.Household AS h on h.hhid=p.hhid
 		WHERE EXISTS (SELECT 1 FROM HHSurvey.trip_error_flags AS tefx WHERE p.person_id = tefx.person_id) AND 
 		      EXISTS (SELECT 1 FROM HHSurvey.Trip AS te WHERE p.person_id = te.person_id AND te.psrc_comment IS NOT NULL)
 			  --AND NOT EXISTS (SELECT 1 FROM HHSurvey.person_Mike AS p1 WHERE p1.person_id = p.person_id)
 			  ;
 		GO 
 
-		/*CREATE VIEW HHSurvey.person_Polina WITH SCHEMABINDING AS
-		WITH cte AS (SELECT person_id FROM HHSurvey.person_Mike 
-		   UNION ALL SELECT person_id FROM HHSurvey.person_Elevated) 
-		SELECT p.person_id, p.hhid AS hhid, p.pernum, ac.agedesc AS Age, 
-			CASE WHEN p.worker  = 0 THEN 'No' ELSE 'Yes' END AS Works, 
-			CASE WHEN p.student = 1 THEN 'No' WHEN student = 2 THEN 'PT' WHEN p.student = 3 THEN 'FT' ELSE 'No' END AS Studies, 
-			CASE WHEN p.hhgroup = 1 THEN 'rMove' WHEN p.hhgroup = 2 THEN 'rSurvey' ELSE 'n/a' END AS HHGroup
-		FROM HHSurvey.person AS p INNER JOIN HHSurvey.AgeCategories AS ac ON p.age = ac.agecode
-		WHERE Exists (SELECT 1 FROM HHSurvey.trip_error_flags AS tef WHERE p.person_id = tef.person_id AND tef.error_flag IN('PUDO, no +/- travelers','excessive speed','too long at dest?'))
-		AND NOT EXISTS (SELECT 1 FROM cte WHERE cte.person_id=p.person_id)
-		AND p.person_id < 2126436101;
-		GO*/
-
-		CREATE VIEW HHSurvey.person_Parastoo WITH SCHEMABINDING AS
-		WITH cte AS (--SELECT person_id FROM HHSurvey.person_Mike UNION ALL 
+		CREATE VIEW HHSurvey.person_Joanne WITH SCHEMABINDING AS
+		WITH cte AS (SELECT person_id FROM HHSurvey.person_Mike UNION ALL 
 		   SELECT person_id FROM HHSurvey.person_Elevated 
-		   --UNION ALL SELECT person_id FROM HHSurvey.person_Polina
 		   )
 		SELECT p.person_id, p.hhid AS hhid, p.pernum, ac.agedesc AS Age, 
 			CASE WHEN p.employment  = 0 THEN 'No' ELSE 'Yes' END AS Works, 
 			CASE WHEN p.student = 1 THEN 'No' WHEN student = 2 THEN 'PT' WHEN p.student = 3 THEN 'FT' ELSE 'No' END AS Studies, 
 			CASE WHEN h.hhgroup = 11 THEN 'rMove' WHEN h.hhgroup IS NOT NULL THEN 'rSurvey' ELSE 'n/a' END AS HHGroup
-		FROM HHSurvey.person AS p INNER JOIN HHSurvey.AgeCategories AS ac ON p.age = ac.agecode JOIN HHSurvey.Household AS h on h.hhid=p.hhid
-		WHERE Exists (SELECT 1 FROM HHSurvey.trip_error_flags AS tef WHERE p.person_id = tef.person_id)-- AND tef.error_flag IN('PUDO, no +/- travelers','excessive speed','too long at dest?'))
+		FROM HHSurvey.Person AS p INNER JOIN HHSurvey.AgeCategories AS ac ON p.age = ac.agecode JOIN HHSurvey.Household AS h on h.hhid=p.hhid
+		WHERE Exists (SELECT 1 FROM HHSurvey.trip_error_flags AS tef WHERE p.person_id = tef.person_id AND tef.error_flag IN('missing next trip link'))
 			AND NOT EXISTS (SELECT 1 FROM cte WHERE cte.person_id=p.person_id);
 		GO 
 
-		/*CREATE VIEW HHSurvey.person_Mary WITH SCHEMABINDING AS
+		CREATE VIEW HHSurvey.person_Suzanne WITH SCHEMABINDING AS
 		WITH cte AS (SELECT person_id FROM HHSurvey.person_Mike 
 		   UNION ALL SELECT person_id FROM HHSurvey.person_Elevated 
-		   UNION ALL SELECT person_id FROM HHSurvey.person_Parastoo
-		   UNION ALL SELECT person_id FROM HHSurvey.person_Polina)
+		   UNION ALL SELECT person_id FROM HHSurvey.person_Joanne)
 		SELECT p.person_id, p.hhid AS hhid, p.pernum, ac.agedesc AS Age, 
-			CASE WHEN p.worker  = 0 THEN 'No' ELSE 'Yes' END AS Works, 
+			CASE WHEN p.employment  = 0 THEN 'No' ELSE 'Yes' END AS Works, 
 			CASE WHEN p.student = 1 THEN 'No' WHEN student = 2 THEN 'PT' WHEN p.student = 3 THEN 'FT' ELSE 'No' END AS Studies, 
-			CASE WHEN p.hhgroup = 1 THEN 'rMove' WHEN p.hhgroup = 2 THEN 'rSurvey' ELSE 'n/a' END AS HHGroup
-		FROM HHSurvey.person AS p INNER JOIN HHSurvey.AgeCategories AS ac ON p.age = ac.agecode
-		WHERE Exists (SELECT 1 FROM HHSurvey.trip_error_flags AS tef WHERE tef.person_id = p.person_id)-- AND tef.error_flag IN('lone trip'))
+			CASE WHEN h.hhgroup = 11 THEN 'rMove' WHEN h.hhgroup IS NOT NULL THEN 'rSurvey' ELSE 'n/a' END AS HHGroup
+		FROM HHSurvey.Person AS p INNER JOIN HHSurvey.AgeCategories AS ac ON p.age = ac.agecode JOIN HHSurvey.Household AS h on h.hhid=p.hhid
+		WHERE Exists (SELECT 1 FROM HHSurvey.trip_error_flags AS tef WHERE tef.person_id = p.person_id AND tef.error_flag IN('lone trip'))
 			AND NOT EXISTS (SELECT 1 FROM cte WHERE cte.person_id=p.person_id);
-		GO*/
+		GO
 
-		CREATE VIEW HHSurvey.person_Grant WITH SCHEMABINDING AS
+		CREATE VIEW HHSurvey.person_Brandon WITH SCHEMABINDING AS
 		WITH cte AS (SELECT person_id FROM HHSurvey.person_Mike 
 		   UNION ALL SELECT person_id FROM HHSurvey.person_Elevated 
-		   UNION ALL SELECT person_id FROM HHSurvey.person_Parastoo
-		   --UNION ALL SELECT person_id FROM HHSurvey.person_Polina
-		   --UNION ALL SELECT person_id FROM HHSurvey.person_Mary
+		   UNION ALL SELECT person_id FROM HHSurvey.person_Joanne
+		   UNION ALL SELECT person_id FROM HHSurvey.person_Suzanne
 		   )
 		SELECT p.person_id, p.hhid AS hhid, p.pernum, ac.agedesc AS Age, 
 			CASE WHEN p.employment  = 0 THEN 'No' ELSE 'Yes' END AS Works, 
 			CASE WHEN p.student = 1 THEN 'No' WHEN student = 2 THEN 'PT' WHEN p.student = 3 THEN 'FT' ELSE 'No' END AS Studies, 
 			CASE WHEN h.hhgroup = 11 THEN 'rMove' WHEN h.hhgroup IS NOT NULL THEN 'rSurvey' ELSE 'n/a' END AS HHGroup
-		FROM HHSurvey.person AS p INNER JOIN HHSurvey.AgeCategories AS ac ON p.age = ac.agecode JOIN HHSurvey.Household AS h on h.hhid=p.hhid
-		WHERE Exists (SELECT 1 FROM HHSurvey.trip_error_flags AS tef WHERE tef.person_id = p.person_id)
+		FROM HHSurvey.Person AS p INNER JOIN HHSurvey.AgeCategories AS ac ON p.age = ac.agecode JOIN HHSurvey.Household AS h on h.hhid=p.hhid
+		WHERE Exists (SELECT 1 FROM HHSurvey.trip_error_flags AS tef WHERE tef.person_id = p.person_id AND tef.error_flag IN('same dest as prior'))
 		AND NOT EXISTS (SELECT 1 FROM cte WHERE cte.person_id = p.person_id);
 		GO
 
-		/*CREATE VIEW HHSurvey.person_Abdi WITH SCHEMABINDING AS
-		WITH cte AS (SELECT person_id FROM HHSurvey.person_Mike 
-		   UNION ALL SELECT person_id FROM HHSurvey.person_Elevated 
-		   UNION ALL SELECT person_id FROM HHSurvey.person_Parastoo
-		   UNION ALL SELECT person_id FROM HHSurvey.person_Polina
-		   UNION ALL SELECT person_id FROM HHSurvey.person_Mary
-		   UNION ALL SELECT person_id FROM HHSurvey.person_Grant)
-		SELECT p.person_id, p.hhid AS hhid, p.pernum, ac.agedesc AS Age, 
-			CASE WHEN p.worker  = 0 THEN 'No' ELSE 'Yes' END AS Works, 
-			CASE WHEN p.student = 1 THEN 'No' WHEN student = 2 THEN 'PT' WHEN p.student = 3 THEN 'FT' ELSE 'No' END AS Studies, 
-			CASE WHEN p.hhgroup = 1 THEN 'rMove' WHEN p.hhgroup = 2 THEN 'rSurvey' ELSE 'n/a' END AS HHGroup
-		FROM HHSurvey.person AS p INNER JOIN HHSurvey.AgeCategories AS ac ON p.age = ac.agecode
-		WHERE Exists (SELECT 1 FROM HHSurvey.trip_error_flags AS tef WHERE p.person_id = tef.person_id)
-		AND NOT EXISTS (SELECT 1 FROM cte WHERE cte.person_id = p.person_id);
-		GO*/
-
-SELECT count(*),'Abdi' FROM HHSurvey.person_Abdi
-UNION ALL select count(*),'Mary' FROM HHSurvey.person_Mary
-UNION ALL select count(*),'Grant' FROM HHSurvey.person_Grant
---UNION ALL select count(*),'Polina' FROM HHSurvey.person_Polina
-UNION ALL select count(*),'Parastoo' FROM HHSurvey.person_Parastoo
+SELECT count(*),'Brandon' FROM HHSurvey.person_Brandon
+UNION ALL select count(*),'Suzanne' FROM HHSurvey.person_Suzanne
+UNION ALL select count(*),'Joanne' FROM HHSurvey.person_Joanne
 UNION ALL select count(*),'Mike' FROM HHSurvey.person_Mike
-UNION ALL select count(*),'Elevated' FROM HHSurvey.person_Elevated
-
-SELECT person_id FROM HHSurvey.person_Mike;
+UNION ALL select count(*),'Elevated' FROM HHSurvey.person_Elevated;
