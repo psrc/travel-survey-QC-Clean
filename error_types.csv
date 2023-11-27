@@ -1,0 +1,20 @@
+"","error_flag","vital"
+"1","unlicensed driver",0
+"2","underage driver",0
+"3","non-student + school trip",0
+"4","non-worker + work trip",0
+"5","no activity time after",0
+"6","no activity time before",0
+"7","missing next trip link",0
+"8","missing prior trip link",1
+"9","same dest as next",0
+"10","same dest as prior",1
+"11","same transit line listed 2x+",0
+"12","starts, not from home",0
+"13","ends day, not home",0
+"14","too long at dest",1
+"15","excessive speed",1
+"16","too slow",1
+"17","purpose at odds w/ dest",1
+"18","PUDO, no +/- travelers",0
+"19","time overlap",1
