@@ -118,6 +118,7 @@ write.csv(errors_edits_no_user_edits_complete, 'errors_edits_complete_b_no_user_
 
 
 ```{r}
+
 errors_edits_complete_b<-trips_edits%>%group_by(hh_iscomplete_b, error_flag)%>%count()
 write.csv(errors_edits_complete_b, 'errors_edits_hh_is_complete_b.csv')
 ```
@@ -132,11 +133,38 @@ write.csv(errors_edits_no_user_edits_complete, 'errors_edits_complete_b_no_user_
 ```
 
 ```{r}
-persons_days_ungroup<-tripuser_added%>%group_by(person_id,daynum)
+errors_complete_b<-trip_rulesy%>%filter(hh_iscomplete_b==1 & error_flag=='mode_1 missing')
+
+mode_1_missing_trips<-errors_complete_b%>%filter(error_flag=='mode_1 missing')
+persons_days_group<-mode_1_missing_trips%>%select(person_id,daynum)%>%distinct()
+```
+
+```{r }
+mode_1_missing_days<-merge(persons_days_group, trip_rulesy, by=c('person_id','daynum'))%>%arrange(person_id, daynum, depart_time_timestamp, arrival_time_timestamp)
 ```
 
 ```{r}
-bad_days<-slice_sample(persons_days_ungroup,n=10)
+label_values<-function(df, varname, values, new_name){
+  vals<- values%>%filter(variable==sym(varname))
+  df<-df%>%
+      left_join(vals, by=join_by(!!ensym(varname)==value))%>%
+      rename(!!ensym(new_name):=final_label)
+  
+  return(df)
+}
+mode_1_missing_purpose<-mode_1_missing_days%>%group_by(dest_purpose)%>%count()
+
+mode_1_missing_purpose<-label_values(mode_1_missing_purpose, 'dest_purpose', values, 'destination purpose')
+
+
+mode_1_missing_mode<-mode_1_missing_days%>%group_by(mode_1)%>%count()
+
+mode_1_missing_mode<-label_values(mode_1_missing_mode, 'mode_1', values, 'destination purpose')
+
+```
+
+```{r}
+
 ```
 
 ```{r}
@@ -208,9 +236,9 @@ trip_raw%>%group_by(diary_platform)%>%count()
 
 ```{r}
 
-example_recs_change_mode<-trip_rulesy_raw%>%filter(error_flag=='"change mode" purpose')
+example_recs_mode_1<-trips_edits%>%filter(error_flag=='mode_1 missing')
 
-example_recs_missing_trip_link<-trip_rulesy_raw%>%filter(error_flag=='missing next trip link')
+#example_recs_missing_trip_link<-trip_rulesy_raw%>%filter(error_flag=='missing next trip link')
 ```
 
 ### function to summarize avariable across a single flag
