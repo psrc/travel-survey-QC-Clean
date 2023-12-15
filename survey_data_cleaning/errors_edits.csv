@@ -1,0 +1,333 @@
+"","user_added","user_merged","user_split","diary_platform","trace_quality_flag","hh_iscomplete_a","error_flag","n"
+"1",0,1,1,"rmove",0,0,"""change mode"" purpose",25
+"2",0,1,1,"rmove",0,0,"PUDO, no +/- travelers",6
+"3",0,1,1,"rmove",0,0,"driver, no-drive mode",17
+"4",0,1,1,"rmove",0,0,"ends day, not home",3
+"5",0,1,1,"rmove",0,0,"excessive speed",3
+"6",0,1,1,"rmove",0,0,"missing next trip link",23
+"7",0,1,1,"rmove",0,0,"missing prior trip link",17
+"8",0,1,1,"rmove",0,0,"mode_1 missing",11
+"9",0,1,1,"rmove",0,0,"no activity time after",5
+"10",0,1,1,"rmove",0,0,"purpose at odds w/ dest",1
+"11",0,1,1,"rmove",0,0,"same dest as prior",8
+"12",0,1,1,"rmove",0,0,"time overlap",14
+"13",0,1,1,"rmove",0,0,"too slow",9
+"14",0,1,1,"rmove",0,0,NA,230
+"15",0,1,1,"rmove",0,1,"""change mode"" purpose",136
+"16",0,1,1,"rmove",0,1,"PUDO, no +/- travelers",21
+"17",0,1,1,"rmove",0,1,"driver, no-drive mode",41
+"18",0,1,1,"rmove",0,1,"ends day, not home",11
+"19",0,1,1,"rmove",0,1,"excessive speed",5
+"20",0,1,1,"rmove",0,1,"missing next trip link",44
+"21",0,1,1,"rmove",0,1,"missing prior trip link",34
+"22",0,1,1,"rmove",0,1,"mode_1 missing",36
+"23",0,1,1,"rmove",0,1,"no activity time after",1
+"24",0,1,1,"rmove",0,1,"o purpose not equal to prior d purpose",1
+"25",0,1,1,"rmove",0,1,"same dest as prior",42
+"26",0,1,1,"rmove",0,1,"time overlap",45
+"27",0,1,1,"rmove",0,1,"too long at dest?",1
+"28",0,1,1,"rmove",0,1,"too slow",19
+"29",0,1,1,"rmove",0,1,NA,652
+"30",0,1,1,"rmove",1,0,"""change mode"" purpose",30
+"31",0,1,1,"rmove",1,0,"PUDO, no +/- travelers",21
+"32",0,1,1,"rmove",1,0,"dest disagrees w/ Bing",109
+"33",0,1,1,"rmove",1,0,"driver, no-drive mode",13
+"34",0,1,1,"rmove",1,0,"ends day, not home",10
+"35",0,1,1,"rmove",1,0,"excessive speed",3
+"36",0,1,1,"rmove",1,0,"missing next trip link",28
+"37",0,1,1,"rmove",1,0,"missing prior trip link",28
+"38",0,1,1,"rmove",1,0,"mode_1 missing",9
+"39",0,1,1,"rmove",1,0,"same dest as prior",11
+"40",0,1,1,"rmove",1,0,"time overlap",10
+"41",0,1,1,"rmove",1,0,"too slow",43
+"42",0,1,1,"rmove",1,0,NA,479
+"43",0,1,1,"rmove",1,1,"""change mode"" purpose",8
+"44",0,1,1,"rmove",1,1,"PUDO, no +/- travelers",1
+"45",0,1,1,"rmove",1,1,"dest disagrees w/ Bing",3
+"46",0,1,1,"rmove",1,1,"driver, no-drive mode",2
+"47",0,1,1,"rmove",1,1,"missing next trip link",2
+"48",0,1,1,"rmove",1,1,"missing prior trip link",1
+"49",0,1,1,"rmove",1,1,"mode_1 missing",2
+"50",0,1,1,"rmove",1,1,"time overlap",5
+"51",0,1,1,"rmove",1,1,"too slow",1
+"52",0,1,1,"rmove",1,1,NA,20
+"53",0,1,995,"rmove",0,0,"""change mode"" purpose",113
+"54",0,1,995,"rmove",0,0,"PUDO, no +/- travelers",26
+"55",0,1,995,"rmove",0,0,"driver, no-drive mode",24
+"56",0,1,995,"rmove",0,0,"ends day, not home",11
+"57",0,1,995,"rmove",0,0,"excessive speed",13
+"58",0,1,995,"rmove",0,0,"missing next trip link",81
+"59",0,1,995,"rmove",0,0,"missing prior trip link",53
+"60",0,1,995,"rmove",0,0,"mode_1 missing",53
+"61",0,1,995,"rmove",0,0,"non-student + school trip",1
+"62",0,1,995,"rmove",0,0,"non-worker + work trip",3
+"63",0,1,995,"rmove",0,0,"same dest as prior",28
+"64",0,1,995,"rmove",0,0,"time overlap",37
+"65",0,1,995,"rmove",0,0,"too long at dest?",2
+"66",0,1,995,"rmove",0,0,"too slow",32
+"67",0,1,995,"rmove",0,0,NA,766
+"68",0,1,995,"rmove",0,1,"""change mode"" purpose",533
+"69",0,1,995,"rmove",0,1,"PUDO, no +/- travelers",55
+"70",0,1,995,"rmove",0,1,"driver, no-drive mode",124
+"71",0,1,995,"rmove",0,1,"ends day, not home",48
+"72",0,1,995,"rmove",0,1,"excessive speed",25
+"73",0,1,995,"rmove",0,1,"missing next trip link",206
+"74",0,1,995,"rmove",0,1,"missing prior trip link",191
+"75",0,1,995,"rmove",0,1,"mode_1 missing",314
+"76",0,1,995,"rmove",0,1,"no activity time after",4
+"77",0,1,995,"rmove",0,1,"non-student + school trip",1
+"78",0,1,995,"rmove",0,1,"o purpose not equal to prior d purpose",1
+"79",0,1,995,"rmove",0,1,"same dest as prior",146
+"80",0,1,995,"rmove",0,1,"time overlap",263
+"81",0,1,995,"rmove",0,1,"too long at dest?",13
+"82",0,1,995,"rmove",0,1,"too slow",90
+"83",0,1,995,"rmove",0,1,NA,2840
+"84",0,1,995,"rmove",1,0,"""change mode"" purpose",86
+"85",0,1,995,"rmove",1,0,"PUDO, no +/- travelers",33
+"86",0,1,995,"rmove",1,0,"dest disagrees w/ Bing",173
+"87",0,1,995,"rmove",1,0,"driver, no-drive mode",50
+"88",0,1,995,"rmove",1,0,"ends day, not home",17
+"89",0,1,995,"rmove",1,0,"excessive speed",17
+"90",0,1,995,"rmove",1,0,"missing next trip link",61
+"91",0,1,995,"rmove",1,0,"missing prior trip link",51
+"92",0,1,995,"rmove",1,0,"mode_1 missing",24
+"93",0,1,995,"rmove",1,0,"no activity time after",1
+"94",0,1,995,"rmove",1,0,"same dest as prior",12
+"95",0,1,995,"rmove",1,0,"time overlap",17
+"96",0,1,995,"rmove",1,0,"too long at dest?",8
+"97",0,1,995,"rmove",1,0,"too slow",102
+"98",0,1,995,"rmove",1,0,NA,900
+"99",0,1,995,"rmove",1,1,"""change mode"" purpose",30
+"100",0,1,995,"rmove",1,1,"PUDO, no +/- travelers",2
+"101",0,1,995,"rmove",1,1,"dest disagrees w/ Bing",10
+"102",0,1,995,"rmove",1,1,"driver, no-drive mode",14
+"103",0,1,995,"rmove",1,1,"ends day, not home",3
+"104",0,1,995,"rmove",1,1,"excessive speed",1
+"105",0,1,995,"rmove",1,1,"missing next trip link",12
+"106",0,1,995,"rmove",1,1,"missing prior trip link",7
+"107",0,1,995,"rmove",1,1,"mode_1 missing",9
+"108",0,1,995,"rmove",1,1,"same dest as prior",7
+"109",0,1,995,"rmove",1,1,"time overlap",4
+"110",0,1,995,"rmove",1,1,"too long at dest?",1
+"111",0,1,995,"rmove",1,1,"too slow",5
+"112",0,1,995,"rmove",1,1,NA,95
+"113",0,995,1,"rmove",0,0,"""change mode"" purpose",80
+"114",0,995,1,"rmove",0,0,"PUDO, no +/- travelers",59
+"115",0,995,1,"rmove",0,0,"driver, no-drive mode",39
+"116",0,995,1,"rmove",0,0,"ends day, not home",27
+"117",0,995,1,"rmove",0,0,"excessive speed",44
+"118",0,995,1,"rmove",0,0,"lone trip",1
+"119",0,995,1,"rmove",0,0,"missing next trip link",99
+"120",0,995,1,"rmove",0,0,"missing prior trip link",70
+"121",0,995,1,"rmove",0,0,"mode_1 missing",86
+"122",0,995,1,"rmove",0,0,"no activity time after",16
+"123",0,995,1,"rmove",0,0,"purpose at odds w/ dest",3
+"124",0,995,1,"rmove",0,0,"same dest as prior",35
+"125",0,995,1,"rmove",0,0,"time overlap",67
+"126",0,995,1,"rmove",0,0,"too long at dest?",3
+"127",0,995,1,"rmove",0,0,"too slow",18
+"128",0,995,1,"rmove",0,0,NA,1644
+"129",0,995,1,"rmove",0,1,"""change mode"" purpose",266
+"130",0,995,1,"rmove",0,1,"PUDO, no +/- travelers",135
+"131",0,995,1,"rmove",0,1,"driver, no-drive mode",70
+"132",0,995,1,"rmove",0,1,"ends day, not home",37
+"133",0,995,1,"rmove",0,1,"excessive speed",16
+"134",0,995,1,"rmove",0,1,"lone trip",1
+"135",0,995,1,"rmove",0,1,"missing next trip link",102
+"136",0,995,1,"rmove",0,1,"missing prior trip link",75
+"137",0,995,1,"rmove",0,1,"mode_1 missing",63
+"138",0,995,1,"rmove",0,1,"no activity time after",11
+"139",0,995,1,"rmove",0,1,"non-worker + work trip",1
+"140",0,995,1,"rmove",0,1,"purpose at odds w/ dest",1
+"141",0,995,1,"rmove",0,1,"same dest as prior",106
+"142",0,995,1,"rmove",0,1,"time overlap",149
+"143",0,995,1,"rmove",0,1,"too long at dest?",6
+"144",0,995,1,"rmove",0,1,"too slow",4
+"145",0,995,1,"rmove",0,1,NA,3216
+"146",0,995,1,"rmove",1,0,"""change mode"" purpose",215
+"147",0,995,1,"rmove",1,0,"PUDO, no +/- travelers",125
+"148",0,995,1,"rmove",1,0,"dest disagrees w/ Bing",867
+"149",0,995,1,"rmove",1,0,"driver, no-drive mode",56
+"150",0,995,1,"rmove",1,0,"ends day, not home",78
+"151",0,995,1,"rmove",1,0,"excessive speed",8
+"152",0,995,1,"rmove",1,0,"lone trip",1
+"153",0,995,1,"rmove",1,0,"missing next trip link",216
+"154",0,995,1,"rmove",1,0,"missing prior trip link",168
+"155",0,995,1,"rmove",1,0,"mode_1 missing",40
+"156",0,995,1,"rmove",1,0,"no activity time after",1
+"157",0,995,1,"rmove",1,0,"non-worker + work trip",2
+"158",0,995,1,"rmove",1,0,"o purpose not equal to prior d purpose",1
+"159",0,995,1,"rmove",1,0,"purpose at odds w/ dest",3
+"160",0,995,1,"rmove",1,0,"same dest as prior",49
+"161",0,995,1,"rmove",1,0,"time overlap",97
+"162",0,995,1,"rmove",1,0,"too long at dest?",22
+"163",0,995,1,"rmove",1,0,"too slow",355
+"164",0,995,1,"rmove",1,0,NA,4415
+"165",0,995,1,"rmove",1,1,"""change mode"" purpose",8
+"166",0,995,1,"rmove",1,1,"dest disagrees w/ Bing",8
+"167",0,995,1,"rmove",1,1,"driver, no-drive mode",6
+"168",0,995,1,"rmove",1,1,"missing next trip link",2
+"169",0,995,1,"rmove",1,1,"missing prior trip link",2
+"170",0,995,1,"rmove",1,1,"same dest as prior",3
+"171",0,995,1,"rmove",1,1,"time overlap",1
+"172",0,995,1,"rmove",1,1,"too slow",2
+"173",0,995,1,"rmove",1,1,NA,64
+"174",0,995,995,"rmove",0,0,"""change mode"" purpose",285
+"175",0,995,995,"rmove",0,0,"PUDO, no +/- travelers",209
+"176",0,995,995,"rmove",0,0,"driver, no-drive mode",291
+"177",0,995,995,"rmove",0,0,"ends day, not home",95
+"178",0,995,995,"rmove",0,0,"excessive speed",533
+"179",0,995,995,"rmove",0,0,"lone trip",1
+"180",0,995,995,"rmove",0,0,"missing next trip link",415
+"181",0,995,995,"rmove",0,0,"missing prior trip link",317
+"182",0,995,995,"rmove",0,0,"mode_1 missing",253
+"183",0,995,995,"rmove",0,0,"no activity time after",11
+"184",0,995,995,"rmove",0,0,"non-student + school trip",1
+"185",0,995,995,"rmove",0,0,"non-worker + work trip",3
+"186",0,995,995,"rmove",0,0,"o purpose not equal to prior d purpose",28
+"187",0,995,995,"rmove",0,0,"purpose at odds w/ dest",3
+"188",0,995,995,"rmove",0,0,"same dest as prior",54
+"189",0,995,995,"rmove",0,0,"time overlap",131
+"190",0,995,995,"rmove",0,0,"too long at dest?",42
+"191",0,995,995,"rmove",0,0,"too slow",36
+"192",0,995,995,"rmove",0,0,NA,7266
+"193",0,995,995,"rmove",0,1,"""change mode"" purpose",1050
+"194",0,995,995,"rmove",0,1,"PUDO, no +/- travelers",458
+"195",0,995,995,"rmove",0,1,"driver, no-drive mode",559
+"196",0,995,995,"rmove",0,1,"ends day, not home",285
+"197",0,995,995,"rmove",0,1,"excessive speed",872
+"198",0,995,995,"rmove",0,1,"lone trip",1
+"199",0,995,995,"rmove",0,1,"missing next trip link",520
+"200",0,995,995,"rmove",0,1,"missing prior trip link",537
+"201",0,995,995,"rmove",0,1,"mode_1 missing",577
+"202",0,995,995,"rmove",0,1,"no activity time after",11
+"203",0,995,995,"rmove",0,1,"non-student + school trip",5
+"204",0,995,995,"rmove",0,1,"non-worker + work trip",13
+"205",0,995,995,"rmove",0,1,"o purpose not equal to prior d purpose",13
+"206",0,995,995,"rmove",0,1,"purpose at odds w/ dest",4
+"207",0,995,995,"rmove",0,1,"same dest as prior",269
+"208",0,995,995,"rmove",0,1,"time overlap",510
+"209",0,995,995,"rmove",0,1,"too long at dest?",56
+"210",0,995,995,"rmove",0,1,"too slow",40
+"211",0,995,995,"rmove",0,1,NA,25679
+"212",0,995,995,"rmove",1,0,"""change mode"" purpose",260
+"213",0,995,995,"rmove",1,0,"PUDO, no +/- travelers",161
+"214",0,995,995,"rmove",1,0,"dest disagrees w/ Bing",929
+"215",0,995,995,"rmove",1,0,"driver, no-drive mode",188
+"216",0,995,995,"rmove",1,0,"ends day, not home",120
+"217",0,995,995,"rmove",1,0,"excessive speed",103
+"218",0,995,995,"rmove",1,0,"missing next trip link",268
+"219",0,995,995,"rmove",1,0,"missing prior trip link",244
+"220",0,995,995,"rmove",1,0,"mode_1 missing",59
+"221",0,995,995,"rmove",1,0,"no activity time after",9
+"222",0,995,995,"rmove",1,0,"non-student + school trip",1
+"223",0,995,995,"rmove",1,0,"non-worker + work trip",1
+"224",0,995,995,"rmove",1,0,"o purpose not equal to prior d purpose",3
+"225",0,995,995,"rmove",1,0,"same dest as prior",43
+"226",0,995,995,"rmove",1,0,"time overlap",60
+"227",0,995,995,"rmove",1,0,"too long at dest?",69
+"228",0,995,995,"rmove",1,0,"too slow",386
+"229",0,995,995,"rmove",1,0,NA,5370
+"230",0,995,995,"rmove",1,1,"""change mode"" purpose",60
+"231",0,995,995,"rmove",1,1,"PUDO, no +/- travelers",13
+"232",0,995,995,"rmove",1,1,"dest disagrees w/ Bing",73
+"233",0,995,995,"rmove",1,1,"driver, no-drive mode",21
+"234",0,995,995,"rmove",1,1,"ends day, not home",6
+"235",0,995,995,"rmove",1,1,"excessive speed",17
+"236",0,995,995,"rmove",1,1,"missing next trip link",15
+"237",0,995,995,"rmove",1,1,"missing prior trip link",9
+"238",0,995,995,"rmove",1,1,"mode_1 missing",8
+"239",0,995,995,"rmove",1,1,"same dest as prior",6
+"240",0,995,995,"rmove",1,1,"time overlap",9
+"241",0,995,995,"rmove",1,1,"too long at dest?",4
+"242",0,995,995,"rmove",1,1,"too slow",9
+"243",0,995,995,"rmove",1,1,NA,625
+"244",1,1,1,"rmove",0,0,"""change mode"" purpose",2
+"245",1,1,1,"rmove",0,0,NA,1
+"246",1,1,1,"rmove",0,1,"excessive speed",1
+"247",1,1,1,"rmove",0,1,"too slow",1
+"248",1,1,995,"rmove",0,0,"excessive speed",4
+"249",1,1,995,"rmove",0,0,"missing next trip link",2
+"250",1,1,995,"rmove",0,0,"missing prior trip link",2
+"251",1,1,995,"rmove",0,0,NA,11
+"252",1,1,995,"rmove",0,1,"""change mode"" purpose",3
+"253",1,1,995,"rmove",0,1,"missing next trip link",5
+"254",1,1,995,"rmove",0,1,"missing prior trip link",6
+"255",1,1,995,"rmove",0,1,"mode_1 missing",4
+"256",1,1,995,"rmove",0,1,NA,6
+"257",1,995,995,"browser",0,1,"""change mode"" purpose",273
+"258",1,995,995,"browser",0,1,"PUDO, no +/- travelers",370
+"259",1,995,995,"browser",0,1,"Too early?",21
+"260",1,995,995,"browser",0,1,"dest disagrees w/ Bing",43
+"261",1,995,995,"browser",0,1,"driver, no-drive mode",199
+"262",1,995,995,"browser",0,1,"ends day, not home",227
+"263",1,995,995,"browser",0,1,"excessive speed",228
+"264",1,995,995,"browser",0,1,"lone trip",162
+"265",1,995,995,"browser",0,1,"missing next trip link",1385
+"266",1,995,995,"browser",0,1,"missing prior trip link",760
+"267",1,995,995,"browser",0,1,"mode_1 missing",1
+"268",1,995,995,"browser",0,1,"non-student + school trip",5
+"269",1,995,995,"browser",0,1,"non-worker + work trip",9
+"270",1,995,995,"browser",0,1,"o purpose not equal to prior d purpose",1
+"271",1,995,995,"browser",0,1,"purpose at odds w/ dest",23
+"272",1,995,995,"browser",0,1,"same dest as prior",89
+"273",1,995,995,"browser",0,1,"starts, not from home",2
+"274",1,995,995,"browser",0,1,"time overlap",41
+"275",1,995,995,"browser",0,1,"too long at dest?",9
+"276",1,995,995,"browser",0,1,"too slow",142
+"277",1,995,995,"browser",0,1,NA,14689
+"278",1,995,995,"call",0,1,"""change mode"" purpose",35
+"279",1,995,995,"call",0,1,"PUDO, no +/- travelers",6
+"280",1,995,995,"call",0,1,"Too early?",1
+"281",1,995,995,"call",0,1,"driver, no-drive mode",18
+"282",1,995,995,"call",0,1,"ends day, not home",4
+"283",1,995,995,"call",0,1,"excessive speed",25
+"284",1,995,995,"call",0,1,"lone trip",1
+"285",1,995,995,"call",0,1,"missing next trip link",168
+"286",1,995,995,"call",0,1,"missing prior trip link",102
+"287",1,995,995,"call",0,1,"mode_1 missing",1
+"288",1,995,995,"call",0,1,"no activity time after",1
+"289",1,995,995,"call",0,1,"non-student + school trip",1
+"290",1,995,995,"call",0,1,"non-worker + work trip",1
+"291",1,995,995,"call",0,1,"same dest as prior",12
+"292",1,995,995,"call",0,1,"time overlap",7
+"293",1,995,995,"call",0,1,"too long at dest?",1
+"294",1,995,995,"call",0,1,"too slow",6
+"295",1,995,995,"call",0,1,NA,365
+"296",1,995,995,"rmove",0,0,"""change mode"" purpose",80
+"297",1,995,995,"rmove",0,0,"PUDO, no +/- travelers",28
+"298",1,995,995,"rmove",0,0,"Too early?",2
+"299",1,995,995,"rmove",0,0,"dest disagrees w/ Bing",2
+"300",1,995,995,"rmove",0,0,"driver, no-drive mode",58
+"301",1,995,995,"rmove",0,0,"ends day, not home",35
+"302",1,995,995,"rmove",0,0,"excessive speed",50
+"303",1,995,995,"rmove",0,0,"missing next trip link",154
+"304",1,995,995,"rmove",0,0,"missing prior trip link",131
+"305",1,995,995,"rmove",0,0,"mode_1 missing",15
+"306",1,995,995,"rmove",0,0,"no activity time after",1
+"307",1,995,995,"rmove",0,0,"non-worker + work trip",1
+"308",1,995,995,"rmove",0,0,"same dest as prior",18
+"309",1,995,995,"rmove",0,0,"starts, not from home",2
+"310",1,995,995,"rmove",0,0,"time overlap",11
+"311",1,995,995,"rmove",0,0,"too long at dest?",4
+"312",1,995,995,"rmove",0,0,"too slow",22
+"313",1,995,995,"rmove",0,0,NA,1520
+"314",1,995,995,"rmove",0,1,"""change mode"" purpose",84
+"315",1,995,995,"rmove",0,1,"PUDO, no +/- travelers",18
+"316",1,995,995,"rmove",0,1,"driver, no-drive mode",18
+"317",1,995,995,"rmove",0,1,"ends day, not home",30
+"318",1,995,995,"rmove",0,1,"excessive speed",20
+"319",1,995,995,"rmove",0,1,"lone trip",1
+"320",1,995,995,"rmove",0,1,"missing next trip link",241
+"321",1,995,995,"rmove",0,1,"missing prior trip link",104
+"322",1,995,995,"rmove",0,1,"mode_1 missing",9
+"323",1,995,995,"rmove",0,1,"no activity time after",1
+"324",1,995,995,"rmove",0,1,"non-student + school trip",1
+"325",1,995,995,"rmove",0,1,"non-worker + work trip",1
+"326",1,995,995,"rmove",0,1,"purpose at odds w/ dest",3
+"327",1,995,995,"rmove",0,1,"same dest as prior",17
+"328",1,995,995,"rmove",0,1,"starts, not from home",4
+"329",1,995,995,"rmove",0,1,"time overlap",17
+"330",1,995,995,"rmove",0,1,"too long at dest?",1
+"331",1,995,995,"rmove",0,1,"too slow",18
+"332",1,995,995,"rmove",0,1,NA,1242

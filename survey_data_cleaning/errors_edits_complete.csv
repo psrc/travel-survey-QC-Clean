@@ -1,0 +1,45 @@
+"","hh_iscomplete_a","error_flag","n"
+"1",0,"""change mode"" purpose",1176
+"2",0,"PUDO, no +/- travelers",668
+"3",0,"Too early?",2
+"4",0,"dest disagrees w/ Bing",2080
+"5",0,"driver, no-drive mode",736
+"6",0,"ends day, not home",396
+"7",0,"excessive speed",778
+"8",0,"lone trip",3
+"9",0,"missing next trip link",1347
+"10",0,"missing prior trip link",1081
+"11",0,"mode_1 missing",550
+"12",0,"no activity time after",44
+"13",0,"non-student + school trip",3
+"14",0,"non-worker + work trip",10
+"15",0,"o purpose not equal to prior d purpose",32
+"16",0,"purpose at odds w/ dest",10
+"17",0,"same dest as prior",258
+"18",0,"starts, not from home",2
+"19",0,"time overlap",444
+"20",0,"too long at dest?",150
+"21",0,"too slow",1003
+"22",0,NA,22602
+"23",1,"""change mode"" purpose",2486
+"24",1,"PUDO, no +/- travelers",1079
+"25",1,"Too early?",22
+"26",1,"dest disagrees w/ Bing",137
+"27",1,"driver, no-drive mode",1072
+"28",1,"ends day, not home",651
+"29",1,"excessive speed",1210
+"30",1,"lone trip",166
+"31",1,"missing next trip link",2702
+"32",1,"missing prior trip link",1828
+"33",1,"mode_1 missing",1024
+"34",1,"no activity time after",29
+"35",1,"non-student + school trip",13
+"36",1,"non-worker + work trip",25
+"37",1,"o purpose not equal to prior d purpose",16
+"38",1,"purpose at odds w/ dest",31
+"39",1,"same dest as prior",697
+"40",1,"starts, not from home",6
+"41",1,"time overlap",1051
+"42",1,"too long at dest?",92
+"43",1,"too slow",337
+"44",1,NA,49493
