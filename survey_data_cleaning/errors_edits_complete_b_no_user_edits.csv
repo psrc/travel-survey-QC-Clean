@@ -1,66 +1,62 @@
 "","hh_iscomplete_b","user_edits_rmove","error_flag","n"
-"1",0,"edit","""change mode"" purpose",350
-"2",0,"edit","PUDO, no +/- travelers",293
-"3",0,"edit","ends day, not home",119
-"4",0,"edit","excessive speed",59
-"5",0,"edit","lone trip",3
-"6",0,"edit","missing next trip link",363
-"7",0,"edit","mode_1 missing",111
-"8",0,"edit","no activity time after",15
-"9",0,"edit","non-student + school trip",1
-"10",0,"edit","non-worker + work trip",6
-"11",0,"edit","o purpose not equal to prior d purpose",1
-"12",0,"edit","purpose at odds w/ dest",1
-"13",0,"edit","same dest as prior",10
-"14",0,"edit","starts, not from home",6
-"15",0,"edit","too long at dest?",108
-"16",0,"edit","too slow",78
-"17",0,"edit",NA,10814
-"18",0,"no edit","""change mode"" purpose",332
-"19",0,"no edit","PUDO, no +/- travelers",361
-"20",0,"no edit","ends day, not home",104
-"21",0,"no edit","excessive speed",49
-"22",0,"no edit","lone trip",2
-"23",0,"no edit","missing next trip link",194
-"24",0,"no edit","mode_1 missing",237
-"25",0,"no edit","no activity time after",24
-"26",0,"no edit","non-student + school trip",3
-"27",0,"no edit","non-worker + work trip",3
-"28",0,"no edit","o purpose not equal to prior d purpose",1
-"29",0,"no edit","same dest as prior",25
-"30",0,"no edit","too long at dest?",194
-"31",0,"no edit","too slow",94
-"32",0,"no edit",NA,12755
-"33",1,"edit","""change mode"" purpose",1226
-"34",1,"edit","PUDO, no +/- travelers",252
-"35",1,"edit","ends day, not home",65
-"36",1,"edit","excessive speed",64
-"37",1,"edit","lone trip",4
-"38",1,"edit","missing next trip link",231
-"39",1,"edit","mode_1 missing",153
-"40",1,"edit","no activity time after",20
-"41",1,"edit","non-student + school trip",5
-"42",1,"edit","non-worker + work trip",2
-"43",1,"edit","o purpose not equal to prior d purpose",2
-"44",1,"edit","same dest as prior",7
-"45",1,"edit","starts, not from home",4
-"46",1,"edit","too long at dest?",64
-"47",1,"edit","too slow",84
-"48",1,"edit",NA,9926
-"49",1,"no edit","""change mode"" purpose",1585
-"50",1,"no edit","PUDO, no +/- travelers",911
-"51",1,"no edit","ends day, not home",117
-"52",1,"no edit","excessive speed",325
-"53",1,"no edit","lone trip",270
-"54",1,"no edit","missing next trip link",236
-"55",1,"no edit","mode_1 missing",371
-"56",1,"no edit","no activity time after",12
-"57",1,"no edit","non-student + school trip",11
-"58",1,"no edit","non-worker + work trip",24
-"59",1,"no edit","o purpose not equal to prior d purpose",43
-"60",1,"no edit","purpose at odds w/ dest",2
-"61",1,"no edit","same dest as prior",47
-"62",1,"no edit","starts, not from home",3
-"63",1,"no edit","too long at dest?",151
-"64",1,"no edit","too slow",335
-"65",1,"no edit",NA,45934
+"1",0,"edit","""change mode"" purpose",40
+"2",0,"edit","PUDO, no +/- travelers",341
+"3",0,"edit","ends day, not home",86
+"4",0,"edit","excessive speed",26
+"5",0,"edit","instantaneous",10
+"6",0,"edit","missing next trip link",243
+"7",0,"edit","mode_1 missing",39
+"8",0,"edit","no activity time after",4
+"9",0,"edit","non-student + school trip",4
+"10",0,"edit","purpose missing",1
+"11",0,"edit","same dest as prior",10
+"12",0,"edit","starts, not from home",5
+"13",0,"edit","too long at dest?",125
+"14",0,"edit","too slow",40
+"15",0,"edit",NA,11132
+"16",0,"no edit","""change mode"" purpose",59
+"17",0,"no edit","PUDO, no +/- travelers",374
+"18",0,"no edit","ends day, not home",82
+"19",0,"no edit","excessive speed",8
+"20",0,"no edit","initial trip purpose missing",2
+"21",0,"no edit","instantaneous",29
+"22",0,"no edit","missing next trip link",145
+"23",0,"no edit","mode_1 missing",142
+"24",0,"no edit","no activity time after",6
+"25",0,"no edit","non-student + school trip",7
+"26",0,"no edit","purpose missing",20
+"27",0,"no edit","same dest as prior",31
+"28",0,"no edit","too long at dest?",212
+"29",0,"no edit","too slow",26
+"30",0,"no edit",NA,13062
+"31",1,"edit","""change mode"" purpose",35
+"32",1,"edit","PUDO, no +/- travelers",269
+"33",1,"edit","ends day, not home",23
+"34",1,"edit","excessive speed",5
+"35",1,"edit","instantaneous",4
+"36",1,"edit","missing next trip link",141
+"37",1,"edit","mode_1 missing",8
+"38",1,"edit","purpose missing",1
+"39",1,"edit","same dest as prior",4
+"40",1,"edit","starts, not from home",1
+"41",1,"edit","time overlap",2
+"42",1,"edit","too long at dest?",31
+"43",1,"edit","too slow",9
+"44",1,"edit",NA,10474
+"45",1,"no edit","""change mode"" purpose",87
+"46",1,"no edit","PUDO, no +/- travelers",946
+"47",1,"no edit","ends day, not home",34
+"48",1,"no edit","excessive speed",8
+"49",1,"no edit","instantaneous",1
+"50",1,"no edit","missing next trip link",150
+"51",1,"no edit","mode_1 missing",16
+"52",1,"no edit","non-student + school trip",3
+"53",1,"no edit","non-worker + work trip",4
+"54",1,"no edit","purpose missing",9
+"55",1,"no edit","same dest as prior",5
+"56",1,"no edit","time overlap",3
+"57",1,"no edit","too long at dest?",53
+"58",1,"no edit","too slow",14
+"59",1,"no edit",NA,47720
+"60",1,NA,"missing next trip link",4
+"61",1,NA,NA,9

@@ -1,35 +1,33 @@
 "","hh_iscomplete_b","error_flag","n"
-"1",0,"""change mode"" purpose",682
-"2",0,"PUDO, no +/- travelers",654
-"3",0,"ends day, not home",223
-"4",0,"excessive speed",108
-"5",0,"lone trip",5
-"6",0,"missing next trip link",557
-"7",0,"mode_1 missing",348
-"8",0,"no activity time after",39
-"9",0,"non-student + school trip",4
-"10",0,"non-worker + work trip",9
-"11",0,"o purpose not equal to prior d purpose",2
-"12",0,"purpose at odds w/ dest",1
-"13",0,"same dest as prior",35
-"14",0,"starts, not from home",6
-"15",0,"too long at dest?",302
-"16",0,"too slow",172
-"17",0,NA,23569
-"18",1,"""change mode"" purpose",2811
-"19",1,"PUDO, no +/- travelers",1163
-"20",1,"ends day, not home",182
-"21",1,"excessive speed",389
-"22",1,"lone trip",274
-"23",1,"missing next trip link",467
-"24",1,"mode_1 missing",524
-"25",1,"no activity time after",32
-"26",1,"non-student + school trip",16
-"27",1,"non-worker + work trip",26
-"28",1,"o purpose not equal to prior d purpose",45
-"29",1,"purpose at odds w/ dest",2
-"30",1,"same dest as prior",54
-"31",1,"starts, not from home",7
-"32",1,"too long at dest?",215
-"33",1,"too slow",419
-"34",1,NA,55860
+"1",0,"""change mode"" purpose",99
+"2",0,"PUDO, no +/- travelers",715
+"3",0,"ends day, not home",168
+"4",0,"excessive speed",34
+"5",0,"initial trip purpose missing",2
+"6",0,"instantaneous",39
+"7",0,"missing next trip link",388
+"8",0,"mode_1 missing",181
+"9",0,"no activity time after",10
+"10",0,"non-student + school trip",11
+"11",0,"purpose missing",21
+"12",0,"same dest as prior",41
+"13",0,"starts, not from home",5
+"14",0,"too long at dest?",337
+"15",0,"too slow",66
+"16",0,NA,24194
+"17",1,"""change mode"" purpose",122
+"18",1,"PUDO, no +/- travelers",1215
+"19",1,"ends day, not home",57
+"20",1,"excessive speed",13
+"21",1,"instantaneous",5
+"22",1,"missing next trip link",295
+"23",1,"mode_1 missing",24
+"24",1,"non-student + school trip",3
+"25",1,"non-worker + work trip",4
+"26",1,"purpose missing",10
+"27",1,"same dest as prior",9
+"28",1,"starts, not from home",1
+"29",1,"time overlap",5
+"30",1,"too long at dest?",84
+"31",1,"too slow",23
+"32",1,NA,58203

@@ -163,13 +163,7 @@ mode_1_missing_mode<-label_values(mode_1_missing_mode, 'mode_1', values, 'destin
 
 ```
 
-```{r}
-
-```
-
-```{r}
-write.csv(bad_days,'bad_recs_is_complete_a.csv')
-```
+`
 
 ```{r}
 sample_problem_days<-read.csv('bad_recs_is_complete_a.csv')
@@ -259,4 +253,16 @@ var_compare<-function(df, id, var_name){
 }
 ```
 
+
+```{r}
+
+trip_rulesy_col<-trip_rulesy%>%
+  select(hhid,error_flag, person_id, day_id, tripnum, tripid, depart_time_timestamp, arrival_time_timestamp, mode_1, distance_miles, travel_time, speed_mph, origin_lat, origin_lng, dest_lat, dest_lng, origin_purpose,dest_purpose,depart_time_timestamp,arrival_time_timestamp, arrive_date, arrival_time_hour, arrival_time_minute, depart_time_hour, depart_time_minute)%>%arrange(hhid,person_id, depart_time_timestamp, arrival_time_timestamp)
+
+```
+
+```{r}
+trip_rulesy_hh<-trip_rulesy_col%>%filter(hhid==23014826)
+
+```
 

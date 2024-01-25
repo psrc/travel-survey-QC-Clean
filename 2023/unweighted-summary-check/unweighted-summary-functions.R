@@ -53,4 +53,69 @@ category_shares<- function(tbl, var_name){
   return(tbl_counts)
 
 }
+
+category_shares_wide<- function(tbl, var_name){
+  
+  tbl_counts<-tbl%>%
+    group_by(survey_year, !!!syms(var_name))%>%
+    summarise(n=n())%>%
+    mutate(share= n/sum(n))
+  
+  tbl_wide<- tbl_counts%>%select(survey_year, share, !!!syms(var_name))%>%
+    mutate(share=percent(share))%>%
+    pivot_wider(names_from= survey_year, values_from=share)
+  print(tbl_wide)
+  
+  return(tbl_wide)
+  
+}
+
+
+category_totals_wide<- function(tbl, var_name){
+  
+  tbl_counts<-tbl%>%
+    group_by(survey_year, !!!syms(var_name))%>%
+    summarise(n=n())%>%
+    mutate(share= n/sum(n))
+  
+  tbl_wide<- tbl_counts%>%select(survey_year, n, !!!syms(var_name))%>%
+    pivot_wider(names_from= survey_year, values_from=n)
+  print(tbl_wide)
+  
+  return(tbl_wide)
+  
+}
+
+
+one_var_compare<-function(df, dfname, id, var_name){
+  #id=!!ensym(id)
+  #var_name=!!ensym(var_name)
+  
+  df_cols<-df%>%select(!!ensym(id), !!ensym(var_name))
+  vals<- values%>%filter(variable==sym(var_name))
+  df_cols<-df_cols%>%
+    left_join(vals, by=join_by(!!ensym(var_name)==value))
+  df_summary<-df_cols%>%
+    group_by(final_label)%>%
+    count()
+  df_summary<-df_summary%>%
+    rename(!!quo_name(dfname):=n)
+}
+
+
+lookup_names<-function(df, dfname, id, var_name){
+  #id=!!ensym(id)
+  #var_name=!!ensym(var_name)
+  
+  df_cols<-df%>%select(!!ensym(id), !!ensym(var_name))
+  vals<- values%>%filter(variable==sym(var_name))
+  df_cols<-df_cols%>%
+    left_join(vals, by=join_by(!!ensym(var_name)==value))
+
+  df_summary<-df_cols%>%
+    select(final_label)%>%rename(!!ensym(var_name):=final_label)
+  
+  df_summary
+}
+
   

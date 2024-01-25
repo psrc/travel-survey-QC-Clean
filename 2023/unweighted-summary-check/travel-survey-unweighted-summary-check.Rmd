@@ -21,34 +21,199 @@ source('unweighted-summary-functions.R')
 
 ```
 
-## Count records on households, persons, day, trip tables
+### 2023 data is structured differently; get the data and then bind with 2017, 2019, 2021
+```{r }
+library(data.table) # general data manipulation
+library(srvyr)      # survey statistics
+library(dplyr)      # helpers for srvyr (mutate, group_by, and %>% pipe), 
+                    # plus function near(), used in qa/qc checks 
+library(stringr)    # string helper functions
+library(flextable)  # formatted tables
+library(ggplot2)    # plotting
+library(scales)     # ggplot2 helpers
+library(plotly)     # interactive plots
+library(rstudioapi) # for setting working directory
+library(psrcelmer)
+library(tidyr)
 
+# Point to where the 2023 codebook lives:
+codebook_path = 'J:/Projects/Surveys/HHTravel/Survey2023/Data/codebook/PSRC_Combined_Codebook_2023_groupings.xlsx'
+
+# Read Data  ===================================================================
+
+
+
+hh_rulesy<-get_table(db_name = "HouseholdTravelSurvey2023", "combined_data", "v_household")%>%filter(hh_iscomplete_b==1)
+person_rulesy<-get_table(db_name = "HouseholdTravelSurvey2023", "combined_data", "v_person")%>%filter(hh_iscomplete_b==1)
+day_rulesy<-get_table(db_name = "HouseholdTravelSurvey2023", "combined_data", "v_day")%>%filter(hh_day_iscomplete_b==1)
+trip_raw<-get_table(db_name = "HouseholdTravelSurvey2023", "combined_data", "v_trip")%>%filter(hh_day_iscomplete_b==1)
+trip_rulesy<-get_table(db_name = "hhts_cleaning", "HHSurvey", "Trip")%>%filter(hh_day_iscomplete_b==1)
+trip_error_flags<-get_table(db_name = "hhts_cleaning", "HHSurvey", "trip_error_flags")
+error_types<-get_table(db_name = "hhts_cleaning", "HHSurvey", "error_types")
+
+
+
+
+
+## Codebook -------------------------------------------------------------------- 
+
+variables = readxl::read_xlsx(
+  codebook_path,
+  sheet = 'variable_list_2023'
+)
+
+values =  readxl::read_xlsx(
+  codebook_path,
+  sheet = 'value_labels_2023'
+)
+
+setDT(variables)
+setDT(values)
+```
+
+
+
+## Count records on households, persons, day, trip tables
+##Number of Households Surveyed
 ```{r}
 hh_count<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='h', vars='household_id')%>%
           group_by(survey_year)%>%
           count()
-# Household Count
-hh_count
 
+hh_count_23<-hh_rulesy%>%count()%>%
+  mutate(survey_year=2023)
+# Household Count
+hh_count<-rbind(hh_count,hh_count_23)
+hh_count
+```
+```{r}
+
+
+hh<-get_hhts_no_weights(survey=c("2019", "2021"), level='h', vars='cityofseattle')
+
+hh_23<-lookup_names(hh_rulesy, '2023', 'hhid', 'cityofseattle' )%>%mutate(survey_year= '2023')
+
+
+hh<-rbind(hh, hh_23)
+
+hh_summ<-category_totals_wide(hh, 'cityofseattle')
+
+hh_summ
+
+```
+
+```{r}
+
+
+#hh<-get_hhts_no_weights(survey=c("2019", "2021"), level='h', vars='cityofbellevue')
+
+hh_23<-lookup_names(hh_rulesy, '2023', 'hhid', 'cityofbellevue' )%>%mutate(survey_year= '2023')
+
+
+#hh<-rbind(hh, hh_23)
+
+hh_summ<-category_totals_wide(hh_23, 'cityofbellevue')
+
+hh_summ
+
+```
+```{r}
+
+
+hh<-get_hhts_no_weights(survey=c("2019", "2021"), level='h', vars='hhincome_detailed')
+
+hh_23<-lookup_names(hh_rulesy, '2023', 'hhid', 'hhincome_detailed' )%>%mutate(survey_year= '2023')
+
+
+hh<-rbind(hh, hh_23)
+
+hh_summ<-category_totals_wide(hh, 'hhincome_detailed')
+
+hh_summ
+
+hh_shares<-category_shares_wide(hh, 'hhincome_detailed')
+
+```
+```{r}
+
+
+hh<-get_hhts_no_weights(survey=c("2019", "2021"), level='h', vars='hhsize')
+
+hh_23<-lookup_names(hh_rulesy, '2023', 'hhid', 'hhsize' )%>%mutate(survey_year= '2023')
+
+
+hh<-rbind(hh, hh_23)
+
+hh_summ<-category_totals_wide(hh, 'hhsize')
+
+hh_summ
+
+hh_shares<-category_shares_wide(hh, 'hhsize')
+
+```
+```{r}
+
+
+hh<-get_hhts_no_weights(survey=c("2019", "2021"), level='h', vars='sample_segment')
+
+hh_23<-lookup_names(hh_rulesy, '2023', 'hhid', 'sample_segment' )%>%mutate(survey_year= '2023')
+
+
+hh<-rbind(hh, hh_23)
+
+hh_summ<-category_totals_wide(hh, 'sample_segment')
+
+hh_summ
+
+hh_shares<-category_shares_wide(hh, 'sample_segment')
+
+```
+
+##Number of People Surveyed
+```{r}
 person_count<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='p', vars='person_id')%>%
           group_by(survey_year)%>%
           count()
 
-# Person Count
-person_count
 
+
+person_count_23<-person_rulesy%>%count()%>%
+  mutate(survey_year=2023)
+
+person_count<-rbind(person_count,person_count_23)
+person_count
+```
+
+##Number of Observed Days
+```{r}
 day_count<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='d', vars='day_id')%>%
           group_by(survey_year)%>%
           count()
+day_count_23<-day_rulesy%>%count()%>%
+  mutate(survey_year=2023)
 
-#Day Count
+day_count<-rbind(day_count,day_count_23)
 day_count
+#Day Count
+```
+
+
+```{r}
+
 
 trip_count<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='t', vars='trip_id')%>%
           group_by(survey_year)%>%
           count()
 
-#Trip Count
+trip_count_23<-trip_rulesy%>%ungroup()%>%count()%>%
+  mutate(survey_year='2023_cleaned')
+
+trip_count_raw<-trip_raw%>%ungroup()%>%count%>%
+  mutate(survey_year='2023_raw')
+
+trip_count<-trip_count%>%mutate(survey_year=as.character(survey_year))
+
+trip_count<-rbind(trip_count,trip_count_raw, trip_count_23)
 trip_count
 
 ```
@@ -58,15 +223,34 @@ trip_count
 ### prev_res_factors_forced
 ```{r }
 hh_forced<-get_hhts_no_weights(survey=c("2019", "2021"), level='h', vars='prev_res_factors_forced')
+
+hh_forced_23<-lookup_names(hh_rulesy, '2023', 'hhid', 'prev_res_factors_forced' )%>%mutate(survey_year= '2023')
+
+
+hh_forced<-rbind(hh_forced, hh_forced_23)
+
 tbl_counts<-category_shares(hh_forced, 'prev_res_factors_forced')
 
 ```
 
 ```{r}
-ggplot(tbl_counts, aes(x=as.factor(survey_year), y=n, fill=prev_res_factors_forced))+
-  geom_bar(stat = "identity")
-ggplot(tbl_counts, aes(x=as.factor(survey_year), y=share, fill=prev_res_factors_forced))+
-  geom_bar(stat = "identity")
+ggplot(tbl_counts, aes(x=as.factor(survey_year), y=share, fill=prev_res_factors_forced))+geom_bar(stat = "identity")
+```
+
+
+```{r}
+
+
+workplace<-get_hhts_no_weights(survey=c("2019", "2021"), level='p', vars='workplace')
+
+workplace_23<-lookup_names(person_rulesy, '2023', 'hhid', 'workplace' )%>%mutate(survey_year= '2023')
+
+
+workplace<-rbind(workplace, workplace_23)
+
+tbl_counts<-category_shares(workplace, 'workplace')
+
+
 ```
 
 ## Persons level
@@ -80,123 +264,75 @@ tbl_counts<-category_shares(person_workplace, 'workplace')
 
 
 ```{r}
-ggplot(tbl_counts, aes(x=as.factor(survey_year), y=n, fill=workplace))+
-  geom_bar(stat = "identity")
+
 ggplot(tbl_counts, aes(x=as.factor(survey_year), y=share, fill=workplace))+
   geom_bar(stat = "identity")
 
 ```
+## Trips by purpose
 
-### student status
 
+```{r}
+
+
+purpose<-get_hhts_no_weights(survey=c("2019", "2021"), level='t', vars='dest_purpose')
+
+purpose_23<-lookup_names(trip_rulesy, '2023', 'tripid', 'dest_purpose' )%>%mutate(survey_year= '2023')
+
+
+purpose<-rbind(purpose, purpose_23)
+
+tbl_counts<-category_shares(purpose, 'dest_purpose')
+
+
+```
+
+#
 ```{r }
-person_student<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='p', vars='student')
-tbl_counts<-category_shares(person_student, 'student')
+ggplot(tbl_counts, aes(x=survey_year, y=share, fill=dest_purpose))+
+  geom_bar(stat = "identity")
 
 ```
-
-### industry
-```{r }
-person_industry<-get_hhts_no_weights(survey=c( "2021"), level='p', vars='industry')
-tbl_counts<-category_shares(person_industry, 'industry')
-
-```
-
-
-
-### race and ethnicity
-#### todo? many categories
-
-
-## Trip summaries
-
-### trips per person per day
-
-```{r }
-trips_purpose<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='t', vars='dest_purpose_cat')
-tbl_counts<-category_shares(trips_purpose, 'dest_purpose_cat')
-
-```
-
-
-```{r}
-tbl_wide_tot<- tbl_counts%>%select(survey_year, n, dest_purpose_cat)%>%
-    pivot_wider(names_from= survey_year, values_from=n)
-tbl_wide_tot
-```
+## Trips by mode
 
 ```{r}
 
-trip_counts<-trips_purpose%>%
-    group_by(survey_year, dest_purpose_cat)%>%
-    summarise(n=n())
-  
-people_count<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='p', vars='person_id')%>%
-  group_by(survey_year)%>%count()
 
+mode<-get_hhts_no_weights(survey=c("2019", "2021"), level='t', vars='mode_1')
+
+mode_23<-lookup_names(trip_rulesy, '2023', 'tripid', 'mode_1' )%>%mutate(survey_year= '2023')
+
+
+mode<-rbind(mode, mode_23)
+
+
+tbl_counts<-category_shares(mode, 'mode_1')
+
+#ggplot(tbl_counts, aes(x=survey_year, y=share, fill=mode_1))+
+#  geom_bar(stat = "identity")
 ```
+## Trips by distance
 
 ```{r}
-day_trips<-day_count %>% 
-              left_join(trip_counts, by=join_by(survey_year), suffix=c(".day", ".trip"))%>%
-              mutate(trips_person=n.trip/n.day)
+distance<-get_hhts_no_weights(survey=c("2019", "2021"), level='t', vars='trip_path_distance')%>%rename(distance_miles=trip_path_distance)%>%mutate(distance_miles=as.numeric(distance_miles))
+
+distance_23<-trip_rulesy%>%select(distance_miles)%>%mutate(survey_year= '2023')%>%mutate(distance_miles=as.numeric(distance_miles))
 
 
-trips_purp_year<-day_trips%>%pivot_wider(names_from=survey_year, values_from=trips_person, id_cols=dest_purpose_cat)%>%adorn_totals("row")
+distance<-rbind(distance, distance_23)
+
+median_dist<-distance%>%group_by(survey_year)%>%
+  summarise(median_dist=median(distance_miles, na.rm=TRUE))
+median_dist
 
 
-trips_purp_year
-
-```
-###Trips per person by purpose for people under 18
-
-```{r}
-trips_purpose_kids<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='t', vars=c('dest_purpose_cat', 'age_category'))%>%filter(age_category=='Under 18 years')%>%
-  group_by(survey_year, dest_purpose_cat)%>%count()
-
-
-kids_day_count<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='d', vars=c('day_id', 'age_category'))%>%filter(age_category=='Under 18 years')%>%group_by(survey_year)%>%count()
-```
-### Kids trip summary
-```{r}
-day_trip_kids<-kids_day_count %>% 
-              left_join(trips_purpose_kids, by=join_by(survey_year), suffix=c(".day", ".trip"))%>%
-              mutate(trips_person=n.trip/n.day)
-
-
-kids_trips_purp_year<-day_trip_kids%>%pivot_wider(names_from=survey_year, values_from=trips_person, id_cols=dest_purpose_cat)%>%adorn_totals("row")
-
-
-kids_trips_purp_year
-
-```
-−	Mean and median trip distances overall and by broad purposes.
-```{r}
-trip_lengths<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='t', vars=c('dest_purpose_cat', 'trip_path_distance'))
-
-# missing trip lengths
-for(year in c("2017", "2019", "2021")){
-  trips_lengths_yr<-trip_lengths%>%filter(survey_year==!!year)
-  print(paste(year, 'Trip Length Summary'))
-  print(summary(trips_lengths_yr$trip_path_distance))
-}
-
-# Median Trip Lengths over time and purpose
-trip_purp<-trip_lengths%>%
-group_by(survey_year, dest_purpose_cat)%>%
-drop_na()%>% 
-summarise(trip_path_dist_median=median(trip_path_distance))%>%
-  pivot_wider(names_from=survey_year, values_from=trip_path_dist_median, id_cols=dest_purpose_cat)
-
-```
-### Transit Trips
-## Transit Trips by Access Mode
-```{r}
-trip_mode<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='t', vars=c('main_mode'))
-mode_summary<-category_shares(trip_mode, 'main_mode')
 ```
 ```{r}
-transit_access_mode<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='t', vars=c('mode_acc'))
-mode_acc_summary<-category_shares(transit_access_mode, 'mode_acc')
-
+distance<-distance%>%filter(distance_miles<200)
+ggplot(distance, aes(x=distance_miles))+geom_histogram(aes(fill=survey_year), position="dodge", alpha=0.4)+facet_wrap(vars(survey_year))
 ```
+
+
+# Trips by purpose and mode
+
+# Trips by mode and distance
