@@ -1,7 +1,7 @@
 ---
 title: "Travel Survey Unweighted Summary"
 author: "suzanne"
-date: "2023-06-21"
+date: "2023-01-29"
 output:
   html_document: default
   pdf_document: default
@@ -43,17 +43,11 @@ codebook_path = 'J:/Projects/Surveys/HHTravel/Survey2023/Data/codebook/PSRC_Comb
 
 
 
-hh_rulesy<-get_table(db_name = "HouseholdTravelSurvey2023", "combined_data", "v_household")%>%filter(hh_iscomplete_b==1)
-person_rulesy<-get_table(db_name = "HouseholdTravelSurvey2023", "combined_data", "v_person")%>%filter(hh_iscomplete_b==1)
-day_rulesy<-get_table(db_name = "HouseholdTravelSurvey2023", "combined_data", "v_day")%>%filter(hh_day_iscomplete_b==1)
+hh_rulesy<-get_table(db_name = "hhts_cleaning", "HHSurvey", "Household")
+person_rulesy<-get_table(db_name = "hhts_cleaning", "HHSurvey", "Person")
+day_rulesy<-get_table(db_name = "hhts_cleaning", "HHSurvey", "Day")
 trip_raw<-get_table(db_name = "HouseholdTravelSurvey2023", "combined_data", "v_trip")%>%filter(hh_day_iscomplete_b==1)
-trip_rulesy<-get_table(db_name = "hhts_cleaning", "HHSurvey", "Trip")%>%filter(hh_day_iscomplete_b==1)
-trip_error_flags<-get_table(db_name = "hhts_cleaning", "HHSurvey", "trip_error_flags")
-error_types<-get_table(db_name = "hhts_cleaning", "HHSurvey", "error_types")
-
-
-
-
+trip_rulesy<-get_table(db_name = "hhts_cleaning", "HHSurvey", "Trip")
 
 ## Codebook -------------------------------------------------------------------- 
 

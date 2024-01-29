@@ -108,7 +108,7 @@ lookup_names<-function(df, dfname, id, var_name){
   #var_name=!!ensym(var_name)
   
   df_cols<-df%>%select(!!ensym(id), !!ensym(var_name))
-  vals<- values%>%filter(variable==sym(var_name))
+  vals<- values%>%filter(variable==sym(var_name))%>%mutate(char_value=as.character(value))
   df_cols<-df_cols%>%
     left_join(vals, by=join_by(!!ensym(var_name)==value))
 
