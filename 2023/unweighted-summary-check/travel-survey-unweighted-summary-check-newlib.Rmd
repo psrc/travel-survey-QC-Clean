@@ -1,0 +1,188 @@
+---
+title: "Travel Survey Unweighted Summary"
+author: "suzanne"
+date: "2023-06-21"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+These summaries are a quick quality control check on the unweighted survey data. We will compare across 2017, 2019, 2021, and 2023 where feasible. The purpose is to identify major problems that need to be fixed in the data, not to fully validate the data since it's not weighted yet.
+
+```{r include=FALSE, message=FALSE, warning=FALSE}
+library(DBI)
+library(dplyr)
+library(travelSurveyTools)
+library(data.table)
+library(ggplot2)
+library(tidyr)
+library(janitor)
+library(scales)
+source('unweighted-summary-functions.R')
+
+```
+
+#2023 data is structured differently; get the data and then bind with 2017, 2019, 2021, 2023
+```{r }
+library(data.table) # general data manipulation
+library(srvyr)      # survey statistics
+library(dplyr)      # helpers for srvyr (mutate, group_by, and %>% pipe), 
+                    # plus function near(), used in qa/qc checks 
+library(stringr)    # string helper functions
+library(flextable)  # formatted tables
+library(ggplot2)    # plotting
+library(scales)     # ggplot2 helpers
+library(plotly)     # interactive plots
+library(rstudioapi) # for setting working directory
+library(psrcelmer)
+library(tidyr)
+
+# Point to where the 2023 codebook lives:
+codebook_path = 'J:/Projects/Surveys/HHTravel/Survey2023/Data/data_deliverable_81823/codebook_guide/PSRC_Combined_Codebook_2023_08162023.xlsx'
+
+# Read Data  ===================================================================
+
+
+
+hh_rulesy<-get_table(db_name = "HouseholdTravelSurvey2023", "combined_data", "v_household")
+person_rulesy<-get_table(db_name = "HouseholdTravelSurvey2023", "combined_data", "v_person")
+day_rulesy<-get_table(db_name = "HouseholdTravelSurvey2023", "combined_data", "v_day")
+vehicle_rulesy<-get_table(db_name = "HouseholdTravelSurvey2023", "combined_data", "v_vehicle")
+trip_raw<-get_table(db_name = "HouseholdTravelSurvey2023", "combined_data", "v_trip")
+trip_rulesy_before<-get_table(db_name = "hhts_cleaning", "HHSurvey", "Trip")
+trip_error_flags<-get_table(db_name = "hhts_cleaning", "HHSurvey", "trip_error_flags")
+error_types<-get_table(db_name = "hhts_cleaning", "HHSurvey", "error_types")
+
+
+
+
+
+## Codebook -------------------------------------------------------------------- 
+
+variables = readxl::read_xlsx(
+  codebook_path,
+  sheet = 'variable_list_2023'
+)
+
+values =  readxl::read_xlsx(
+  codebook_path,
+  sheet = 'value_labels_2023'
+)
+
+setDT(variables)
+setDT(values)
+```
+
+
+```{r }
+setnames(hh, 'hhid', 'hh_id')
+setnames(person, 'hhid', 'hh_id')
+setnames(day, 'hhid', 'hh_id')
+setnames(trip, c('hhid', 'tripid'), c('hh_id', 'trip_id'))
+setnames(vehicle, c('hhid', 'vehid'), c('hh_id', 'vehicle_id'))
+```
+
+
+```{r }
+values[, val_order := seq_len(nrow(values))]
+
+setnames(values, 'final_label', 'label')
+
+setnames(variables, 'description_2023', 'description')
+
+setnames(variables, c('hh_23', 'per_23', 'veh_23', 'day_23', 'trip_23', 'location_final'),
+         c('hh', 'person', 'vehicle', 'day', 'trip', 'location'))
+
+setnames(variables, 'data_type_2023', 'data_type')
+
+variables[, shared_name := ifelse(
+        grepl('--', description),
+        sub('_[^_]*$', '', variable), variable)
+    ]
+
+variables[, is_checkbox := ifelse(grepl('--', description), 1, 0)]
+
+variable_list = variables[!is.na(hh) | !is.na(person) | !is.na(day) | !is.na(trip) | !is.na(vehicle) | location != 0]
+
+setnames(day, 'day_weight_2023', 'day_weight')
+
+setDT(hh)
+setDT(person)
+setDT(day)
+setDT(vehicle)
+setDT(trip)
+
+```
+
+
+
+```{r}
+hh_17_21<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='h', vars=c('household_id', 'prev_res_factors_forced'))
+hh_23<-hh_rulesy%>%select('hhid', 'survey_year', 'prev_res_factors_forced')%>%rename(household_id= hhid)
+
+hh_17_23<- rbind(hh_17_21, hh_23)
+```
+
+
+```{r}
+person_17_21<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='p', vars=c('household_id'))
+person_23<-person_rulesy%>%select('hhid', 'survey_year')%>%rename(household_id= hhid)
+
+person_17_23<- rbind(person_17_21, person_23)
+```
+```{r}
+day_17_21<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='d', vars=c('household_id'))
+day_23<-person_rulesy%>%select('hhid', 'survey_year')%>%rename(household_id= hhid)
+
+day_17_23<- rbind(day_17_21, day_23)
+```
+
+
+
+```{r}
+person_17_21<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='p', vars=c('household_id'))
+person_23<-person_rulesy%>%select('hhid', 'survey_year')%>%rename(household_id= hhid)
+
+person_17_23<- rbind(person_17_21, person_23)
+```
+
+```{r}
+trip_17_21<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='t', vars=c('household_id'))
+trip_23<-person_rulesy%>%select('hhid', 'survey_year')%>%rename(household_id= hhid)
+
+trip_17_23<- rbind(trip_17_21, trip_23)
+```
+
+
+
+```{r}
+vehicle_17_21<-get_hhts_no_weights(survey=c("2017", "2019", "2021"), level='v', vars=c('household_id'))
+vehicle_23<-vehicle_rulesy%>%select('hhid', 'survey_year')%>%rename(household_id= hhid)
+
+vehicle_17_23<- rbind(vehicle_17_21, vehicle_23)
+```
+
+```{r}
+DT = hts_prep_data(summarize_var = 'prev_res_factors_forced',
+                   variables_dt = variable_list,
+                   data = list('hh' = hh,
+                               'person' = person,
+                               'day' = day,
+                               'trip' = trip,
+                               'vehicle' = vehicle))
+
+```
+
+```{r}
+id_summary = hts_summary(prepped_dt = DT$cat, 
+                                summarize_var = 'household_id',
+                                summarize_by = NULL,
+                                summarize_vartype = 'numeric',
+                                weighted = FALSE)
+
+speed_cat_summary$summary
+
+```
+
+
+## Count records on households, persons, day, trip tables
