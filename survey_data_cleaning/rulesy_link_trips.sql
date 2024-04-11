@@ -121,28 +121,43 @@ BEGIN
 
     -- Characterize access and egress trips, separately for 1) transit trips and 2) auto trips.  (Bike/Ped trips have no access/egress)
     -- [Unions must be used here; otherwise the VALUE set from the dbo.Rgx table object gets reused across cte fields.]
+
+    -- Create rgx expressions for access/egress modes
+    	DECLARE @auto_access_egress_modes nvarchar;
+		WITH cte AS (SELECT mode_id FROM HHSurvey.walkmodes
+		   UNION ALL SELECT mode_id FROM HHSurvey.bikemodes)
+		SELECT @auto_access_egress_modes =  STUFF(Elmer.dbo.TRIM('||' + CAST(mode_id AS nchar)), 1, 1, NULL) 
+							   FROM cte FOR XML PATH('');
+
+		DECLARE @transit_access_egress_modes nvarchar;
+		WITH cte AS (SELECT mode_id FROM HHSurvey.walkmodes
+		   UNION ALL SELECT mode_id FROM HHSurvey.bikemodes
+		   UNION ALL SELECT mode_id FROM HHSurvey.automodes)
+		SELECT @auto_access_egress_modes =  STUFF(Elmer.dbo.TRIM('||' + CAST(mode_id AS nchar)), 1, 1, NULL) 
+							   FROM cte FOR XML PATH('');
+
     WITH cte_acc_egr1  AS 
     (	SELECT t1.person_id, t1.tripnum, 'A' AS label, 'transit' AS trip_type,
-            (SELECT MAX(CAST(VALUE AS int)) FROM STRING_SPLIT(Elmer.dbo.rgx_extract(t1.modes,'^((?:1|2|3|4|5|6|7|8|9|10|11|12|16|17|18|21|22|33|34|36|37|43|47|48|54|60|65|66|67|68|69|70|71|72|73|74|75|78|79|81|82),)+',1),',')) AS link_value
+            (SELECT MAX(CAST(VALUE AS int)) FROM STRING_SPLIT(Elmer.dbo.rgx_extract(t1.modes,'^((?:' + @transit_access_egress_modes + '),)+',1),',')) AS link_value
         FROM HHSurvey.Trip AS t1 WHERE EXISTS (SELECT 1 FROM STRING_SPLIT(t1.modes,',') WHERE VALUE IN(SELECT mode_id FROM HHSurvey.transitmodes)) 
-                            AND Elmer.dbo.rgx_extract(t1.modes,'^(\b(?:1|2|3|4|5|6|7|8|9|10|11|12|16|17|18|21|22|33|34|36|37|43|47|48|54|60|65|66|67|68|69|70|71|72|73|74|75|78|79|81|82)\b,?)+',1) IS NOT NULL
+                            AND Elmer.dbo.rgx_extract(t1.modes,'^(\b(?:' + @transit_access_egress_modes + ')\b,?)+',1) IS NOT NULL
         UNION ALL 
         SELECT t2.person_id, t2.tripnum, 'E' AS label, 'transit' AS trip_type,	
-            (SELECT MAX(CAST(VALUE AS int)) FROM STRING_SPLIT(Elmer.dbo.rgx_extract(t2.modes,'(,(?:1|2|3|4|5|6|7|8|9|10|11|12|16|17|18|21|22|33|34|36|37|43|47|48|54|60|65|66|67|68|69|70|71|72|73|74|75|78|79|81|82))+$',1),',')) AS link_value 
+            (SELECT MAX(CAST(VALUE AS int)) FROM STRING_SPLIT(Elmer.dbo.rgx_extract(t2.modes,'(,(?:' + @transit_access_egress_modes + '))+$',1),',')) AS link_value 
         FROM HHSurvey.Trip AS t2 WHERE EXISTS (SELECT 1 FROM STRING_SPLIT(t2.modes,',') WHERE VALUE IN(SELECT mode_id FROM HHSurvey.transitmodes))
-                            AND Elmer.dbo.rgx_extract(t2.modes,'^(\b(?:1|2|3|4|5|6|7|8|9|10|11|12|16|17|18|21|22|33|34|36|37|43|47|48|54|60|65|66|67|68|69|70|71|72|73|74|75|78|79|81|82)\b,?)+',1) IS NOT NULL			
+                            AND Elmer.dbo.rgx_extract(t2.modes,'^(\b(?:' + @transit_access_egress_modes + ')\b,?)+',1) IS NOT NULL			
         UNION ALL 
         SELECT t3.person_id, t3.tripnum, 'A' AS label, 'auto' AS trip_type,
-            (SELECT MAX(CAST(VALUE AS int)) FROM STRING_SPLIT(Elmer.dbo.rgx_extract(t3.modes,'^((?:1|2|65|66|67|68|69|72|73|74|75|81)\b,?)+',1),',')) AS link_value
+            (SELECT MAX(CAST(VALUE AS int)) FROM STRING_SPLIT(Elmer.dbo.rgx_extract(t3.modes,'^((?:' + @auto_access_egress_modes + ')\b,?)+',1),',')) AS link_value
         FROM HHSurvey.Trip AS t3 WHERE EXISTS (SELECT 1 FROM STRING_SPLIT(t3.modes,',') WHERE VALUE IN(SELECT mode_id FROM HHSurvey.automodes)) 
                                 AND NOT EXISTS (SELECT 1 FROM STRING_SPLIT(t3.modes,',') WHERE VALUE IN(SELECT mode_id FROM HHSurvey.transitmodes))
-                                AND Elmer.dbo.rgx_replace(t3.modes,'^(\b(?:1|2|65|66|67|68|69|72|73|74|75|81)\b,?)+','',1) IS NOT NULL
+                                AND Elmer.dbo.rgx_replace(t3.modes,'^(\b(?:' + @auto_access_egress_modes + ')\b,?)+','',1) IS NOT NULL
         UNION ALL 
         SELECT t4.person_id, t4.tripnum, 'E' AS label, 'auto' AS trip_type,
-            (SELECT MAX(CAST(VALUE AS int)) FROM STRING_SPLIT(Elmer.dbo.rgx_extract(t4.modes,'(,(?:1|2|65|66|67|68|69|72|73|74|75|81))+$',1),',')) AS link_value
+            (SELECT MAX(CAST(VALUE AS int)) FROM STRING_SPLIT(Elmer.dbo.rgx_extract(t4.modes,'(,(?:' + @auto_access_egress_modes + '))+$',1),',')) AS link_value
         FROM HHSurvey.Trip AS t4 WHERE EXISTS (SELECT 1 FROM STRING_SPLIT(t4.modes,',') WHERE VALUE IN(SELECT mode_id FROM HHSurvey.automodes)) 
                                 AND NOT EXISTS (SELECT 1 FROM STRING_SPLIT(t4.modes,',') WHERE VALUE IN(SELECT mode_id FROM HHSurvey.transitmodes))
-                                AND Elmer.dbo.rgx_replace(t4.modes,'^(\b(?:1|2|65|66|67|68|69|72|73|74|75|81)\b,?)+','',1) IS NOT NULL),
+                                AND Elmer.dbo.rgx_replace(t4.modes,'^(\b(?:' + @auto_access_egress_modes + ')\b,?)+','',1) IS NOT NULL),
     cte_acc_egr2 AS (SELECT cte.person_id, cte.tripnum, cte.trip_type,
                             MAX(CASE WHEN cte.label = 'A' THEN cte.link_value ELSE NULL END) AS mode_acc,
                             MAX(CASE WHEN cte.label = 'E' THEN cte.link_value ELSE NULL END) AS mode_egr
@@ -165,12 +180,12 @@ BEGIN
 
     -- Populate separate mode fields, removing access/egress from the beginning and end of 1) transit and 2) auto trip strings
         WITH cte AS 
-    (SELECT t1.recid, Elmer.dbo.rgx_replace(Elmer.dbo.rgx_replace(Elmer.dbo.rgx_replace(t1.modes,'\b(1|2|65|66|67|68|69|72|73|74|75|81|97)\b','',1),
-        '(,(?:3|4|5|6|7|8|9|10|11|12|16|17|18|21|22|33|34|36|37|43|47|48|54|60|70|71|78|79|81|82))+$','',1),'^((?:3|4|5|6|7|8|9|10|11|12|16|17|18|21|22|33|34|36|37|43|47|48|54|60|70|71|78|79|81|82),)+','',1) AS mode_reduced
+    (SELECT t1.recid, Elmer.dbo.rgx_replace(Elmer.dbo.rgx_replace(Elmer.dbo.rgx_replace(t1.modes,'\b(' + @auto_access_egress_modes + ')\b','',1),
+        '(,(?:' + @transit_access_egress_modes + '))+$','',1),'^((?:' + @transit_access_egress_modes + '),)+','',1) AS mode_reduced
         FROM HHSurvey.Trip AS t1
         WHERE EXISTS (SELECT 1 FROM STRING_SPLIT(t1.modes,',') WHERE VALUE IN(SELECT mode_id FROM HHSurvey.transitmodes))
     UNION ALL 	
-    SELECT t2.recid, Elmer.dbo.rgx_replace(t2.modes,'\b(1|2|65|66|67|68|69|72|73|74|75|81|97)\b','',1) AS mode_reduced
+    SELECT t2.recid, Elmer.dbo.rgx_replace(t2.modes,'\b(' + @auto_access_egress_modes + ')\b','',1) AS mode_reduced
         FROM HHSurvey.Trip AS t2
         WHERE EXISTS (SELECT 1 FROM STRING_SPLIT(t2.modes,',') WHERE VALUE IN(SELECT mode_id FROM HHSurvey.automodes))
         AND NOT EXISTS (SELECT 1 FROM STRING_SPLIT(t2.modes,',') WHERE VALUE IN(SELECT mode_id FROM HHSurvey.transitmodes)))
