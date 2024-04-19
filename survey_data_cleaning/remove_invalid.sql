@@ -1,13 +1,18 @@
 --flag invalid households based on criteria of shared valid weekday--either travel or a day notravel excuse--for each member over 5
-
+      TRUNCATE TABLE HHSurvey.trip_invalid;
+      GO
       WITH cte AS (SELECT t.person_id, count(*) AS tripcount FROM HHSurvey.Trip AS t GROUP BY t.person_id HAVING count(*) = 1)
                   DELETE FROM HHSurvey.Trip
                   OUTPUT deleted.* INTO HHSurvey.trip_invalid
                   WHERE EXISTS (SELECT 1 FROM cte WHERE trip.person_id = cte.person_id);
 
-      WITH travel_valid AS (SELECT t.hhid, t.travel_day, t.person_id FROM HHSurvey.Trip AS t JOIN HHSurvey.Person AS p ON t.person_id = p.person_id WHERE p.age > 1 AND DATEPART(dw, t.travel_day) BETWEEN 2 and 6 GROUP BY t.hhid, t.travel_day, t.person_id),
+      WITH travel_valid AS (SELECT t.hhid, t.travel_day, t.person_id 
+                              FROM HHSurvey.Trip AS t JOIN HHSurvey.Person AS p ON t.person_id = p.person_id 
+                              WHERE p.age > 1 AND DATEPART(dw, t.travel_day) BETWEEN 2 and 6
+                              GROUP BY t.hhid, t.travel_day, t.person_id),
       stay_valid AS (SELECT d.hhid, d.travel_day, d.person_id FROM HHSurvey.Day AS d JOIN HHSurvey.Person AS p ON d.person_id = p.person_id  
-                  WHERE p.age > 1 AND DATEPART(dw,d.travel_day) BETWEEN 2 and 6 AND (d.notravel_vacation = 1 
+                  WHERE p.age > 1 AND DATEPART(dw,d.travel_day) BETWEEN 2 and 6 
+                      AND (d.notravel_vacation = 1 
                         OR d.notravel_telecommute = 1
                         OR d.notravel_housework = 1
                         OR d.notravel_kidsbreak = 1
@@ -21,14 +26,9 @@
             valid_hhmember_count AS (SELECT hhid, travel_day, count(person_id) AS member_count FROM either_valid GROUP BY hhid, travel_day),
             highest_valid AS (SELECT hhid, max(member_count) AS shared_valid_hhmember FROM valid_hhmember_count GROUP BY hhid),
             members_over5 AS (SELECT p.hhid, count(p.person_id) AS memcount FROM HHSurvey.Person AS p WHERE p.age > 1 GROUP BY p.hhid)
-      SELECT h.hhid, h.hhsize, h.numadults, hv.shared_valid_hhmember INTO HHSurvey.invalid_hh
+      SELECT h.hhid, h.hhsize, h.numadults, hv.shared_valid_hhmember --INTO HHSurvey.invalid_hh
       FROM HHSurvey.Household AS h JOIN highest_valid AS hv ON h.hhid = hv.hhid LEFT JOIN members_over5 AS m5 ON h.hhid = m5.hhid
       WHERE m5.memcount > hv.shared_valid_hhmember ORDER BY h.numadults - hv.shared_valid_hhmember DESC;     
-
-      SELECT count(*) 
-      FROM dbo.[1_Household] as h0 
-      --WHERE EXISTS (SELECT 1 FROM HHSurvey.invalid_hh ih WHERE ih.hhid = h0.hhid) OR h0.hhid IN(191019909,191039495,191025363,191023604)
-      GROUP BY h0.cityofseattle
 
 --Create tables for invalid records
 
@@ -47,7 +47,7 @@
             UNION ALL SELECT TOP 0 * 
             FROM HHSurvey.[Day];
 
-      SELECT * INTO HHSurvey.person_invalid
+      SELECT TOP 0 * INTO HHSurvey.person_invalid
             FROM HHSurvey.Person
             UNION ALL SELECT TOP 0 * 
             FROM HHSurvey.Person;
@@ -70,9 +70,9 @@
       OUTPUT deleted.* INTO HHSurvey.day_invalid
       FROM HHSurvey.Day AS d WHERE EXISTS (SELECT 1 FROM HHSurvey.invalid_hh AS i WHERE d.hhid = i.hhid);
 
-      DELETE p 
+      DELETE p
       OUTPUT deleted.* INTO HHSurvey.person_invalid
-      SELECT * FROM HHSurvey.Person AS p WHERE EXISTS (SELECT 1 FROM HHSurvey.invalid_hh AS i WHERE p.hhid = i.hhid);
+      FROM HHSurvey.Person AS p WHERE EXISTS (SELECT 1 FROM HHSurvey.invalid_hh AS i WHERE p.hhid = i.hhid);
       GO
 
 --update trip counts

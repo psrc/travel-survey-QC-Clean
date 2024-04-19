@@ -54,11 +54,11 @@ AS BEGIN
                                       ELSE t_next.depart_time_timestamp END)) = 1  -- or the next trip starts the next day after 3am)
             AND t1.dest_is_home IS NULL 
             AND (t1.dest_purpose NOT IN(SELECT purpose_id FROM HHSurvey.sleepstay_purposes) OR 
-                (t1.dest_purpose IN(SELECT purpose id FROM work_purposes UNION ALL SELECT purpose_id FROM social_purposes) 
+                (t1.dest_purpose IN(SELECT purpose_id FROM work_purposes UNION ALL SELECT purpose_id FROM social_purposes) 
                 AND t_next.dest_purpose NOT IN(SELECT purpose_id FROM HHSurvey.sleepstay_purposes))) --allow for graveyard shift work, activities that cross 3am boundary
             --AND Elmer.dbo.rgx_find(t1.psrc_comment,'ADD RETURN HOME \d?\d:\d\d',1) = 0
             AND t1.dest_geog.STDistance(h.home_geog) > 300
-            AND NOT EXISTS (SELECT 1 FROM #dayends AS de WHERE t1.person_id = de.person_id AND t1.dest_geog.STDistance(de.loc_geog) < 300)
+            AND NOT EXISTS (SELECT 1 FROM #dayends AS de WHERE t1.person_id = de.person_id AND t1.dest_geog.STDistance(dest.loc_geog) < 300)
             AND Elmer.dbo.rgx_find(t1.modes,'31',1) = 0		
 
         UNION ALL SELECT t_next.recid, t_next.person_id, t_next.tripnum,	           		   		   'starts, not from home' AS error_flag

@@ -15,11 +15,11 @@
 
 		SELECT  t.recid,
 				CONCAT(CAST(t.dest_lat AS VARCHAR(20)),', ',CAST(t.dest_lng AS VARCHAR(20))) AS origin_coord,						 
-				CONCAT(CAST(nxt.origin_lat AS VARCHAR(20)),', ',CAST(nxt.origin_lng AS VARCHAR(20))) AS dest_coord				 
+				CONCAT(CAST(nxt.origin_lat AS VARCHAR(20)),', ',CAST(nxt.origin_lng AS VARCHAR(20))) AS dest_coord,
+				t.dest_geog.STDistance(nxt.origin_geog)/1609.00 AS distance_miles			 
 			 FROM HHSurvey.Trip AS t 
-			 	JOIN HHSurvey.Trip AS nxt ON nxt.personid = t.personid AND nxt.tripnum = t.tripnum + 1
-				JOIN HHSurvey.Household AS h ON t.hhid = h.hhid
-			 WHERE ABS(t.dest_geog.STDistance(nxt.origin_geog)) > 500;
+			 	JOIN HHSurvey.Trip AS nxt ON nxt.person_id = t.person_id AND nxt.tripnum = t.tripnum + 1
+			 WHERE t.dest_geog.STDistance(nxt.origin_geog) > 500 ORDER BY t.dest_geog.STDistance(nxt.origin_geog) DESC;
 
 --Input query to get API times for added return-home trips
 
@@ -32,15 +32,15 @@
 --Input query to get purposes
 
 		SELECT t.recid, CONCAT(CAST(nxt.origin_lat AS VARCHAR(20)),', ',CAST(nxt.origin_lng AS VARCHAR(20))) AS dest_coord, DATEDIFF(Minute, t.arrival_time_timestamp, nxt.depart_time_timestamp) AS dwell, p.age, p.student
-			FROM HHSurvey.Trip AS t JOIN HHSurvey.Trip AS nxt ON t.personid = nxt.personid AND t.tripnum +1 = nxt.tripnum JOIN HHSurvey.Person AS p ON t.personid = p.personid
+			FROM HHSurvey.Trip AS t JOIN HHSurvey.Trip AS nxt ON t.person_id = nxt.person_id AND t.tripnum +1 = nxt.tripnum JOIN HHSurvey.Person AS p ON t.person_id = p.person_id
 			WHERE EXISTS (SELECT 1 FROM HHSurvey.trip_error_flags AS tef WHERE tef.recid = t.recid AND tef.error_flag = '"change mode" purpose')
 				AND DATEDIFF(Minute, t.arrival_time_timestamp, nxt.depart_time_timestamp) > 30 AND t.psrc_comment IS NULL;			
 
 --Generate 'execute sproc' for elevate comments
 
-		SELECT CONCAT('EXECUTE HHSurvey.link_trip_via_id ''',Elmer.dbo.rgx_replace(t.psrc_comment,'LINK ','',1),'''; GO') FROM HHSurvey.Trip AS t WHERE (/*t.psrc_comment LIKE 'LINK%' OR */t.psrc_comment LIKE '[1-9]%[[1-9]') --GROUP BY t.personid, t.psrc_comment ORDER BY t.psrc_comment;
+		SELECT CONCAT('EXECUTE HHSurvey.link_trip_via_id ''',Elmer.dbo.rgx_replace(t.psrc_comment,'LINK ','',1),'''; GO') FROM HHSurvey.Trip AS t WHERE (/*t.psrc_comment LIKE 'LINK%' OR */t.psrc_comment LIKE '[1-9]%[[1-9]') --GROUP BY t.person_id, t.psrc_comment ORDER BY t.psrc_comment;
 
-		SELECT CONCAT('EXECUTE HHSurvey.insert_new_trip ''',Elmer.dbo.rgx_replace(t.psrc_comment,'INSERT TRIP ','',1),'''; GO') FROM HHSurvey.Trip AS t WHERE (t.psrc_comment LIKE 'INSERT TRIP [1-9]%') --GROUP BY t.personid, t.psrc_comment ORDER BY t.psrc_comment;
+		SELECT CONCAT('EXECUTE HHSurvey.insert_new_trip ''',Elmer.dbo.rgx_replace(t.psrc_comment,'INSERT TRIP ','',1),'''; GO') FROM HHSurvey.Trip AS t WHERE (t.psrc_comment LIKE 'INSERT TRIP [1-9]%') --GROUP BY t.person_id, t.psrc_comment ORDER BY t.psrc_comment;
 
 
 		SELECT CONCAT('EXECUTE HHSurvey.split_trip_from_traces ', t.Recid,'; GO') FROM HHSurvey.Trip AS t WHERE t.psrc_comment LIKE 'SPLIT TRIP FROM TRACES%' AND Elmer.dbo.rgx_find(t.psrc_comment,'(loop|link)',1) <> 1 --GROUP BY t.Recid ORDER BY t.Recid;
@@ -49,18 +49,18 @@
 
 		WITH cte AS
 		(SELECT t1.tripid FROM HHSurvey.Trip AS t1 WHERE Elmer.dbo.rgx_find(t1.revision_code,'8,',1) = 1 
-		AND NOT EXISTS (SELECT 1 FROM HHSurvey.trip_ingredients_done AS tid WHERE tid.personid = t1.personid AND tid.arrival_time_timestamp <= t1.arrival_time_timestamp AND tid.depart_time_timestamp >= t1.depart_time_timestamp))
-		SELECT t.recid, t.personid, t.dest_purpose, nxt.dest_purpose, t.dest_geog.STDistance(nxt.dest_geog), t.psrc_comment FROM HHSurvey.Trip AS t /*JOIN cte ON cte.tripid = t.tripid */ JOIN HHSurvey.Trip AS nxt ON t.personid = nxt.personid AND t.tripnum + 1 = nxt.tripnum
+		AND NOT EXISTS (SELECT 1 FROM HHSurvey.trip_ingredients_done AS tid WHERE tid.person_id = t1.person_id AND tid.arrival_time_timestamp <= t1.arrival_time_timestamp AND tid.depart_time_timestamp >= t1.depart_time_timestamp))
+		SELECT t.recid, t.person_id, t.dest_purpose, nxt.dest_purpose, t.dest_geog.STDistance(nxt.dest_geog), t.psrc_comment FROM HHSurvey.Trip AS t /*JOIN cte ON cte.tripid = t.tripid */ JOIN HHSurvey.Trip AS nxt ON t.person_id = nxt.person_id AND t.tripnum + 1 = nxt.tripnum
 		WHERE t.psrc_comment LIKE 'UNLINK[^\?]%' OR t.psrc_comment = 'UNLINK';
 
 --Remove days marked as invalid
 
 SELECT TOP 0 * INTO HHSurvey.trip_invalid FROM HHSurvey.Trip UNION ALL SELECT TOP 0 * FROM HHSurvey.Trip;
 
-	/*	WITH cte AS (SELECT personid, daynum FROM HHSurvey.Trip WHERE psrc_comment LIKE 'INVALID%')
+	/*	WITH cte AS (SELECT person_id, daynum FROM HHSurvey.Trip WHERE psrc_comment LIKE 'INVALID%')
 		DELETE FROM HHSurvey.Trip
 		OUTPUT deleted.* INTO HHSurvey.trip_invalid
-		WHERE EXISTS (SELECT 1 FROM cte WHERE trip.personid = cte.personid AND trip.daynum = cte.daynum);*/
+		WHERE EXISTS (SELECT 1 FROM cte WHERE trip.person_id = cte.person_id AND trip.daynum = cte.daynum);*/
 
 --Error trip count
 
@@ -149,14 +149,19 @@ FROM HHSurvey.Trip AS t JOIN ElmerGeo.dbo.ZIP_CODES AS r ON r.Shape.STIntersects
 SELECT t.region_tripends, count(*) FROM HHSurvey.Trip AS t GROUP BY t.region_tripends;
 
 UPDATE t
-SET t.dest_county=CASE WHEN (t.dest_lat BETWEEN 47.32417899933368 AND 47.77557543545566) AND (t.dest_lng BETWEEN -122.40491513697908 AND -121.47382388080176) THEN '033'
-					   WHEN (t.dest_lat BETWEEN 46.987025526142794 AND 47.25521385921765) AND (t.dest_lng BETWEEN -122.61999268125203 AND -122.14483401659517) THEN '053'
-					   WHEN (t.dest_lat BETWEEN 47.785624118154686 AND 48.29247321335945) AND (t.dest_lng BETWEEN -122.34422210698376 AND -121.18653784598449) THEN '061'
-					   WHEN (t.dest_lat BETWEEN 47.5126145395748 AND 47.7726115311967) AND (t.dest_lng BETWEEN -122.73894212405432 AND -122.50273608266419) THEN '035'
-					   ELSE NULL END
-FROM HHSurvey.Trip AS t WHERE t.dest_county IS NULL;
-
-UPDATE t
 SET t.dest_county = r.county_fip
 FROM HHSurvey.Trip AS t JOIN ElmerGeo.dbo.COUNTY_LINES AS r ON t.dest_geom.STIntersects(r.Shape)=1
 WHERE r.psrc=1;
+
+UPDATE hhts_cleaning.HHSurvey.Trip
+SET psrc_comment='ADD RETURN HOME 19:16' WHERE recid=39713;
+UPDATE hhts_cleaning.HHSurvey.Trip
+SET psrc_comment='ADD RETURN HOME 19:55' WHERE recid=71410;
+UPDATE hhts_cleaning.HHSurvey.Trip
+SET psrc_comment='ADD RETURN HOME 5:09' WHERE recid=87726;
+UPDATE hhts_cleaning.HHSurvey.Trip
+SET psrc_comment='ADD RETURN HOME 19:16' WHERE recid=1493;
+UPDATE hhts_cleaning.HHSurvey.Trip
+SET psrc_comment='ADD RETURN HOME 12:45' WHERE recid=40402;
+UPDATE hhts_cleaning.HHSurvey.Trip
+SET psrc_comment='ADD RETURN HOME 19:35' WHERE recid=69153;
