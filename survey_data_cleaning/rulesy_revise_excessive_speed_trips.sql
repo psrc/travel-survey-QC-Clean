@@ -2,10 +2,10 @@
 -- Preference to reported mode if travel time matches the available window; if not, drive time is considered as an alternative for trips under 7hrs
 */
 
-DROP PROCEDURE IF EXISTS HHSurvey.rulesy_revise_excessive_speed_trips;
+DROP PROCEDURE IF EXISTS HHSurvey.revise_excessive_speed_trips;
 GO
 
-CREATE PROCEDURE HHSurvey.rulesy_revise_excessive_speed_trips @BingKey nvarchar
+CREATE PROCEDURE HHSurvey.revise_excessive_speed_trips @BingKey nvarchar
 AS BEGIN
 
     BEGIN TRANSACTION;
@@ -65,7 +65,7 @@ AS BEGIN
     BEGIN 
         BEGIN TRANSACTION;
         UPDATE TOP (5) [m]
-        SET m.api_result=Elmer.dbo.route_mi_min(m.origin_geog.Long, m.origin_geog.Lat, m.dest_geog.Long, m.dest_geog.Lat, m.query_mode,'[Bing API Key here]')
+        SET m.api_result=Elmer.dbo.route_mi_min(m.origin_geog.Long, m.origin_geog.Lat, m.dest_geog.Long, m.dest_geog.Lat, m.query_mode, @BingKey)
         FROM dbo.tmpApiMiMin AS m
         WHERE m.api_result IS NULL AND m.origin_geog IS NOT NULL AND m.dest_geog IS NOT NULL AND m.query_mode IS NOT NULL;
 

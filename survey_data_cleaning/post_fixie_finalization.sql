@@ -16,12 +16,11 @@ SELECT t.recid, t.origin_lat, t.origin_lng, t.dest_lat, t.dest_lng, t.mode_1, ' 
 
 UPDATE TOP (5) dbo.tmpTPD1
 SET mi_min_result=Elmer.dbo.route_mi_min(origin_lng, origin_lat, dest_lng, dest_lat, CASE WHEN mode_1=1 THEN 'walking' ELSE 'driving' END,'AmXTWUc52YYqvdSlHNGUEAe3RH1TvtcECyH6RGZm7q2vhzv9JzOm1GaY9TKW47lF')
-WHERE mi_min_result='                                       ' AND recid % 5=2;
+WHERE mi_min_result='';
 
-WITH cte AS ()
-UPDATE TOP (50) tu 
-	SET tu.distance_miles = CAST(LEFT(cte.mi_min_result, CHARINDEX(',',cte.mi_min_result)-1) AS float)
-	FROM HHSurvey.Trip AS tu JOIN cte ON tu.recid=cte.recid WHERE cte.mi_min_result<>'0,0';
+UPDATE tu 
+	SET tu.distance_miles = CAST(LEFT(tm.mi_min_result, CHARINDEX(',',tm.mi_min_result)-1) AS float)
+	FROM HHSurvey.Trip AS tu JOIN dbo.tmpTPD1 tm ON tu.recid=tm.recid WHERE tm.mi_min_result<>'0,0';
 
 --Update distance_miles calculation where absent
 WITH cte AS (SELECT t.recid, Elmer.dbo.route_mi_min(t.origin_lng, t.origin_lat, t.dest_lng, t.dest_lat, CASE WHEN t.mode_1=1 THEN 'walking' ELSE 'driving' END,'AmXTWUc52YYqvdSlHNGUEAe3RH1TvtcECyH6RGZm7q2vhzv9JzOm1GaY9TKW47lF') AS mi_min_result
@@ -60,10 +59,10 @@ WHERE r.feat_type='city';
 GO
 UPDATE t SET t.dest_zip=r.zipcode 
 FROM HHSurvey.Trip AS t JOIN ElmerGeo.dbo.ZIP_CODES AS r ON r.Shape.STIntersects(t.dest_geom)=1;
-GO
-UPDATE t SET t.o_puma10=
-FROM HHSurvey.Trip AS t JOIN ElmerGeo.dbo.ZIP_CODES AS r ON r.Shape.STIntersects(t.dest_geom)=1;
-GO
+GO 
+UPDATE t SET t.o_puma10=r.pumace10
+FROM HHSurvey.Trip AS t JOIN ElmerGeo.dbo.REG10PUMA AS r ON r.Shape.STIntersects(t.dest_geom)=1;
+GO 
 
 
 
@@ -167,18 +166,18 @@ SET hhmember_none=CASE WHEN travelers_hh>1 THEN 0 WHEN travelers_hh=1 THEN 1 ELS
 WHERE hhmember_none IS NULL;
 
 UPDATE HHSurvey.Trip
-SET hhmember1 =CASE WHEN hhmember1 IS NULL AND pernum =1 THEN personid ELSE hhmember1 END,
- hhmember2 =CASE WHEN hhmember2 IS NULL AND pernum =2 THEN personid ELSE hhmember2 END,
- hhmember3 =CASE WHEN hhmember3 IS NULL AND pernum =3 THEN personid ELSE hhmember3 END,
- hhmember4 =CASE WHEN hhmember4 IS NULL AND pernum =4 THEN personid ELSE hhmember4 END,
- hhmember5 =CASE WHEN hhmember5 IS NULL AND pernum =5 THEN personid ELSE hhmember5 END,
- hhmember6 =CASE WHEN hhmember6 IS NULL AND pernum =6 THEN personid ELSE hhmember6 END,
- hhmember7 =CASE WHEN hhmember7 IS NULL AND pernum =7 THEN personid ELSE hhmember7 END,
- hhmember8 =CASE WHEN hhmember8 IS NULL AND pernum =8 THEN personid ELSE hhmember8 END,
- hhmember9 =CASE WHEN hhmember9 IS NULL AND pernum =9 THEN personid ELSE hhmember9 END,
- hhmember10 =CASE WHEN hhmember10 IS NULL AND pernum =10 THEN personid ELSE hhmember10 END,
- hhmember11 =CASE WHEN hhmember11 IS NULL AND pernum =11 THEN personid ELSE hhmember11 END,
- hhmember12 =CASE WHEN hhmember12 IS NULL AND pernum =12 THEN personid ELSE hhmember12 END;
+SET hhmember1 =CASE WHEN hhmember1 IS NULL AND pernum =1 THEN person_id ELSE hhmember1 END,
+ hhmember2 =CASE WHEN hhmember2 IS NULL AND pernum =2 THEN person_id ELSE hhmember2 END,
+ hhmember3 =CASE WHEN hhmember3 IS NULL AND pernum =3 THEN person_id ELSE hhmember3 END,
+ hhmember4 =CASE WHEN hhmember4 IS NULL AND pernum =4 THEN person_id ELSE hhmember4 END,
+ hhmember5 =CASE WHEN hhmember5 IS NULL AND pernum =5 THEN person_id ELSE hhmember5 END,
+ hhmember6 =CASE WHEN hhmember6 IS NULL AND pernum =6 THEN person_id ELSE hhmember6 END,
+ hhmember7 =CASE WHEN hhmember7 IS NULL AND pernum =7 THEN person_id ELSE hhmember7 END,
+ hhmember8 =CASE WHEN hhmember8 IS NULL AND pernum =8 THEN person_id ELSE hhmember8 END,
+ hhmember9 =CASE WHEN hhmember9 IS NULL AND pernum =9 THEN person_id ELSE hhmember9 END,
+ hhmember10 =CASE WHEN hhmember10 IS NULL AND pernum =10 THEN person_id ELSE hhmember10 END,
+ hhmember11 =CASE WHEN hhmember11 IS NULL AND pernum =11 THEN person_id ELSE hhmember11 END,
+ hhmember12 =CASE WHEN hhmember12 IS NULL AND pernum =12 THEN person_id ELSE hhmember12 END;
 
  --Remove invalid records from primary tables
 SELECT * INTO HHSurvey.day_invalid_hh 
@@ -404,9 +403,11 @@ UPDATE h
 SET h.numdayscomplete=cte.completedaycount
 FROM HHSurvey.Household AS h JOIN cte ON h.hhid=cte.hhid;
 GO
+
 WITH cte AS (SELECT hhid, [1],[2],[3],[4],[5],[6],[7] FROM 
 			(SELECT hhid, travel_dow, COALESCE(count(*),0) AS completedaycount FROM HHSurvey.Day WHERE pernum=1 AND day_iscomplete=1 GROUP BY hhid, travel_dow) AS s1
 			PIVOT (max(s1.completedaycount) FOR travel_dow IN([1],[2],[3],[4],[5],[6],[7])) AS p1)
+UPDATE h
 SET	h.num_complete_mon = COALESCE(cte.[1],0),
 	h.num_complete_tue = COALESCE(cte.[2],0),
 	h.num_complete_wed = COALESCE(cte.[3],0),

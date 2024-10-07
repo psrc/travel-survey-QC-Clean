@@ -1,5 +1,5 @@
 /* Prep before trip linking
---Harcodes to confirm: purpose 51 (exercise), 60 (change mode); mode 31 (air)
+--Hardcodes to confirm: purpose 51 (exercise), 60 (change mode); mode 31 (air)
 */
 
 DROP PROCEDURE IF EXISTS HHSurvey.trip_link_prep;
@@ -14,12 +14,10 @@ AS BEGIN
     */
     UPDATE HHSurvey.Trip
             SET modes = Elmer.dbo.TRIM(Elmer.dbo.rgx_replace(
-                        STUFF(	COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_acc) AND trip.is_access=0 THEN trip.mode_acc ELSE NULL END AS nvarchar), '') +
-                                COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_1)	  THEN trip.mode_1 	 ELSE NULL END AS nvarchar), '') + 
+                        STUFF(	COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_1)	  THEN trip.mode_1 	 ELSE NULL END AS nvarchar), '') + 
                                 COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_2)	  THEN trip.mode_2 	 ELSE NULL END AS nvarchar), '') + 
                                 COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_3)   THEN trip.mode_3 	 ELSE NULL END AS nvarchar), '') + 
-                                COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_4)   THEN trip.mode_4 	 ELSE NULL END AS nvarchar), '') + 
-                                COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_egr) AND trip.is_access=0 THEN trip.mode_egr ELSE NULL END AS nvarchar), ''), 1, 1, ''),
+                                COALESCE(',' + CAST(CASE WHEN NOT EXISTS (SELECT 1 FROM HHSurvey.NullFlags AS nf WHERE nf.flag_value = trip.mode_4)   THEN trip.mode_4 	 ELSE NULL END AS nvarchar), ''), 1, 1, ''),
                         '(-?\b\d+\b),(?=\b\1\b)','',1));
     COMMIT TRANSACTION;
 
@@ -85,10 +83,10 @@ AS BEGIN
         FROM HHSurvey.Trip
     
     --select the trip ingredients that will be linked; this selects all but the first component 
-    DROP TABLE IF EXISTS #trip_ingredient;
+    DROP TABLE IF EXISTS HHSurvey.trip_ingredient;
     COMMIT TRANSACTION;
     BEGIN TRANSACTION;
-    SELECT next_trip.*, CAST(0 AS int) AS trip_link INTO #trip_ingredient
+    SELECT next_trip.*, CAST(0 AS int) AS trip_link INTO HHSurvey.trip_ingredient
     FROM HHSurvey.Trip as trip 
         JOIN HHSurvey.Trip AS next_trip ON trip.person_id=next_trip.person_id AND trip.tripnum + 1 = next_trip.tripnum
     WHERE trip.dest_is_home IS NULL AND trip.dest_is_work IS NULL AND (											  -- destination of preceding leg isn't home or work
@@ -103,40 +101,40 @@ AS BEGIN
     -- set the trip_link value of the 2nd component to the tripnum of the 1st component.
     UPDATE ti  
         SET ti.trip_link = (ti.tripnum - 1)
-        FROM #trip_ingredient AS ti 
-            LEFT JOIN #trip_ingredient AS previous_et ON ti.person_id = previous_et.person_id AND (ti.tripnum - 1) = previous_et.tripnum
+        FROM HHSurvey.trip_ingredient AS ti 
+            LEFT JOIN HHSurvey.trip_ingredient AS previous_et ON ti.person_id = previous_et.person_id AND (ti.tripnum - 1) = previous_et.tripnum
         WHERE (CONCAT(ti.person_id, (ti.tripnum - 1)) <> CONCAT(previous_et.person_id, previous_et.tripnum));
     
     -- assign trip_link value to remaining records in the trip.
     WITH cte (recid, ref_link) AS 
     (SELECT ti1.recid, MAX(ti1.trip_link) OVER(PARTITION BY ti1.person_id ORDER BY ti1.tripnum ROWS UNBOUNDED PRECEDING) AS ref_link
-        FROM #trip_ingredient AS ti1)
+        FROM HHSurvey.trip_ingredient AS ti1)
     UPDATE ti
         SET ti.trip_link = cte.ref_link
-        FROM #trip_ingredient AS ti JOIN cte ON ti.recid = cte.recid
+        FROM HHSurvey.trip_ingredient AS ti JOIN cte ON ti.recid = cte.recid
         WHERE ti.trip_link = 0;	
 
     -- add the 1st component without deleting it from the trip table.
-    INSERT INTO #trip_ingredient
+    INSERT INTO HHSurvey.trip_ingredient
         SELECT t.*, t.tripnum AS trip_link 
         FROM HHSurvey.Trip AS t 
-            JOIN #trip_ingredient AS ti ON t.person_id = ti.person_id AND t.tripnum = ti.trip_link AND t.tripnum = ti.tripnum - 1;
+            JOIN HHSurvey.trip_ingredient AS ti ON t.person_id = ti.person_id AND t.tripnum = ti.trip_link AND t.tripnum = ti.tripnum - 1;
 
     WITH cte_b AS 
         (SELECT DISTINCT ti_wndw2.person_id, ti_wndw2.trip_link, Elmer.dbo.TRIM(Elmer.dbo.rgx_replace(
             STUFF((SELECT ',' + ti2.modes				--non-adjacent repeated modes, i.e. suggests a loop trip
-                FROM #trip_ingredient AS ti2
+                FROM HHSurvey.trip_ingredient AS ti2
                 WHERE ti2.person_id = ti_wndw2.person_id AND ti2.trip_link = ti_wndw2.trip_link 
                 GROUP BY ti2.modes
                 ORDER BY ti_wndw2.person_id DESC, ti_wndw2.tripnum DESC
                 FOR XML PATH('')), 1, 1, NULL),'(\b\d+\b),(?=\1)','',1)) AS modes	
-        FROM #trip_ingredient as ti_wndw2),
+        FROM HHSurvey.trip_ingredient as ti_wndw2),
     cte2 AS 
         (SELECT ti3.person_id, ti3.trip_link 			--sets with more than 6 trip components
-            FROM #trip_ingredient as ti3 GROUP BY ti3.person_id, ti3.trip_link
+            FROM HHSurvey.trip_ingredient as ti3 GROUP BY ti3.person_id, ti3.trip_link
             HAVING count(*) > 6 
         /*UNION ALL SELECT ti4.person_id, ti4.trip_link --sets with two items that each denote a separate trip
-            FROM #trip_ingredient as ti4 GROUP BY ti4.person_id, ti4.trip_link
+            FROM HHSurvey.trip_ingredient as ti4 GROUP BY ti4.person_id, ti4.trip_link
             HAVING sum(CASE WHEN ti4.change_vehicles = 1 THEN 1 ELSE 0 END) > 1*/
         UNION ALL SELECT cte_b.person_id, cte_b.trip_link	--sets with a pair of modes repeating in reverse (i.e., return trip)
             FROM cte_b
@@ -144,9 +142,9 @@ AS BEGIN
             )
     UPDATE ti
         SET ti.trip_link = -1 * ti.trip_link
-        FROM #trip_ingredient AS ti JOIN cte2 ON cte2.person_id = ti.person_id AND cte2.trip_link = ti.trip_link;
+        FROM HHSurvey.trip_ingredient AS ti JOIN cte2 ON cte2.person_id = ti.person_id AND cte2.trip_link = ti.trip_link;
 
-    UPDATE #trip_ingredient
+    UPDATE HHSurvey.trip_ingredient
     SET modes=Elmer.dbo.rgx_replace(modes,',1,','',1) WHERE Elmer.dbo.rgx_find(modes,',1,',1)=1; -- Not necessary to represent walk between other modes besides access/egress.
     COMMIT TRANSACTION;
 

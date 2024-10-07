@@ -69,7 +69,7 @@ DECLARE @BingKey nvarchar = ['use your Bing API key here']
 	EXECUTE	HHSurvey.rulesy_confirm_routine_locations;          -- Determine legitimate home, work, and school locations (household and person tables)
 
 /* STEP 2.  Set up auto-logging and recalculate  */
-	EXECUTE HHSurvey.rulesy_audit_trigger                       -- Creates the audit trail/logger
+	EXECUTE HHSurvey.audit_trigger;                             -- Creates the audit trail/logger
 	ALTER TABLE HHSurvey.Trip ENABLE TRIGGER [tr_trip];         -- Enables the audit trail/logger; complement is 'ALTER TABLE HHSurvey.Trip DISABLE TRIGGER [tr_trip];'
 	EXECUTE HHSurvey.tripnum_update;                            -- Tripnum must be sequential or later steps will fail.
 
@@ -79,7 +79,7 @@ DECLARE @BingKey nvarchar = ['use your Bing API key here']
 	EXECUTE HHSurvey.dest_purpose_updates;                      -- Destination purpose revisions (extensive)
 
 /* STEP 4. Revise travel times (and where necessary, mode) */  
-	EXECUTE HHSurvey.revise_excessive_speed_trips               -- Change departure or arrival times for records that would qualify for 'excessive speed' flag
+	EXECUTE HHSurvey.revise_excessive_speed_trips @BingKey;     -- Change departure or arrival times for records that would qualify for 'excessive speed' flag
 
 /* STEP 5.	Trip linking */
 	EXECUTE HHSurvey.trip_link_prep;                            -- Sets up trip linking (only run once)
@@ -92,7 +92,7 @@ DECLARE @BingKey nvarchar = ['use your Bing API key here']
 	--FYI HHSurvey.insert_silent_passenger_trips exists but intentionally is NOT used; RSG is also doing something on this issue.
 	--FYI HHSurvey.fill_missing_link exists but intentionally is NOT used; we have accepted the missing links rather than impute so many trips.
 
-	EXECUTE HHSurvey.fix_mistaken_passenger_carryovers          -- When 'driver' code or work purpose are attributed to accompanying passengers
+	EXECUTE HHSurvey.fix_mistaken_passenger_carryovers;         -- When 'driver' code or work purpose are attributed to accompanying passengers
 	EXECUTE HHSurvey.trip_removals;                             -- Creates removed_trip table & removes duplicated 'go home' trips created by rMove
 	EXECUTE HHSurvey.cleanup_trips;	                            -- Snap origin points to prior destination, when proximate
 

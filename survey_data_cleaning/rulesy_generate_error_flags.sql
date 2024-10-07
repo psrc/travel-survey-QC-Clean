@@ -54,11 +54,11 @@ AS BEGIN
                                       ELSE t_next.depart_time_timestamp END)) = 1  -- or the next trip starts the next day after 3am)
             AND t1.dest_is_home IS NULL 
             AND (t1.dest_purpose NOT IN(SELECT purpose_id FROM HHSurvey.sleepstay_purposes) OR 
-                (t1.dest_purpose IN(SELECT purpose_id FROM work_purposes UNION ALL SELECT purpose_id FROM social_purposes) 
+                (t1.dest_purpose IN(SELECT purpose_id FROM HHSurvey.work_purposes UNION ALL SELECT purpose_id FROM HHSurvey.social_purposes) 
                 AND t_next.dest_purpose NOT IN(SELECT purpose_id FROM HHSurvey.sleepstay_purposes))) --allow for graveyard shift work, activities that cross 3am boundary
             --AND Elmer.dbo.rgx_find(t1.psrc_comment,'ADD RETURN HOME \d?\d:\d\d',1) = 0
             AND t1.dest_geog.STDistance(h.home_geog) > 300
-            AND NOT EXISTS (SELECT 1 FROM #dayends AS de WHERE t1.person_id = de.person_id AND t1.dest_geog.STDistance(dest.loc_geog) < 300)
+            AND NOT EXISTS (SELECT 1 FROM dayends AS de WHERE t1.person_id = de.person_id AND t1.dest_geog.STDistance(de.loc_geog) < 300)
             AND Elmer.dbo.rgx_find(t1.modes,'31',1) = 0		
 
         UNION ALL SELECT t_next.recid, t_next.person_id, t_next.tripnum,	           		   		   'starts, not from home' AS error_flag
@@ -105,8 +105,8 @@ AS BEGIN
 
         UNION ALL SELECT  t10.recid,  t10.person_id,  t10.tripnum, 									  'driver, no-drive mode' AS error_flag
             FROM trip_ref as t10
-            WHERE NOT EXISTS (SELECT value FROM STRING_SPLIT(t10.modes, ',') WHERE value NOT IN (SELECT mode_id FROM transitmodes UNION SELECT 1)) AND  t10.driver = 1
-            AND EXISTS (SELECT value FROM STRING_SPLIT(t10.modes, ',') WHERE value IN (SELECT mode_id FROM automodes))
+            WHERE NOT EXISTS (SELECT value FROM STRING_SPLIT(t10.modes, ',') WHERE value NOT IN (SELECT mode_id FROM HHSurvey.transitmodes UNION SELECT 1)) AND  t10.driver = 1
+            AND EXISTS (SELECT value FROM STRING_SPLIT(t10.modes, ',') WHERE value IN (SELECT mode_id FROM HHSurvey.automodes))
 
         UNION ALL SELECT  t11.recid,  t11.person_id,  t11.tripnum, 							 		 'non-worker + work trip' AS error_flag
             FROM trip_ref AS t11 JOIN hhts_cleaning.HHSurvey.Person AS p ON p.person_id= t11.person_id
@@ -170,7 +170,7 @@ AS BEGIN
                 WHERE t22.dest_purpose = 60 AND Elmer.dbo.rgx_find(t_next.modes,'(31|32)',1) = 0 AND Elmer.dbo.rgx_find(t22.modes,'(31|32)',1) = 0
                 AND t22.travelers_total = t_next.travelers_total
 
-        UNION ALL SELECT t23.recid, t23.person_id, t23.tripnum,					          		  		'PUDO, no +/- travelers' AS error_flag
+/*        UNION ALL SELECT t23.recid, t23.person_id, t23.tripnum,					          		  		'PUDO, no +/- travelers' AS error_flag
             FROM HHSurvey.Trip AS t23 LEFT JOIN HHSurvey.Trip AS t_next ON  t23.person_id = t_next.person_id	AND  t23.tripnum + 1 = t_next.tripnum						
             WHERE  t23.dest_purpose IN(SELECT purpose_id FROM HHSurvey.PUDO_purposes) AND (t23.travelers_total = t_next.travelers_total)
                 AND NOT (CASE WHEN t23.hhmember1 <> t_next.hhmember1 THEN 1 ELSE 0 END +
@@ -180,8 +180,8 @@ AS BEGIN
                             CASE WHEN t23.hhmember5 <> t_next.hhmember5 THEN 1 ELSE 0 END +
                             CASE WHEN t23.hhmember6 <> t_next.hhmember6 THEN 1 ELSE 0 END +
                             CASE WHEN t23.hhmember7 <> t_next.hhmember7 THEN 1 ELSE 0 END +
-                            CASE WHEN t23.hhmember8 <> t_next.hhmember8 THEN 1 ELSE 0 END) > 1
-
+                            CASE WHEN t23.hhmember8 <> t_next.hhmember8 THEN 1 ELSE 0 END) > 1 
+*/
         UNION ALL SELECT t24.recid, t24.person_id, t24.tripnum,					  				 	    	   'too long at dest?' AS error_flag
             FROM trip_ref AS t24 JOIN HHSurvey.Trip AS t_next ON t24.person_id = t_next.person_id AND t24.tripnum + 1 = t_next.tripnum
                 WHERE   (t24.dest_purpose IN(SELECT purpose_id FROM HHSurvey.work_purposes UNION ALL SELECT purpose_id FROM HHSurvey.ed_purposes)    		
@@ -199,7 +199,7 @@ AS BEGIN
                             CASE WHEN t_next.recid IS NULL 
                                     THEN DATETIME2FROMPARTS(DATEPART(year, t24.arrival_time_timestamp),DATEPART(month, t24.arrival_time_timestamp),DATEPART(day, t24.arrival_time_timestamp),3,0,0,0,0) 
                                     ELSE t_next.depart_time_timestamp END) > 480)
-                    OR  (t24.dest_purpose = (SELECT purpose_id FROM HHSurvey.PUDO_purposes) 	
+                    OR  (t24.dest_purpose IN (SELECT purpose_id FROM HHSurvey.PUDO_purposes) 	
                     AND DATEDIFF(Minute, t24.arrival_time_timestamp, 
                             CASE WHEN t_next.recid IS NULL 
                                     THEN DATETIME2FROMPARTS(DATEPART(year, t24.arrival_time_timestamp),DATEPART(month, t24.arrival_time_timestamp),DATEPART(day, t24.arrival_time_timestamp),3,0,0,0,0) 
