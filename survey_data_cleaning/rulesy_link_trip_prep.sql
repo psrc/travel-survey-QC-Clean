@@ -57,18 +57,14 @@ AS BEGIN
     WHERE t.modes IS NULL AND t.distance_miles < 0.6 AND t.speed_mph < 5;
 
 -- Drop trips that go nowhere and replicate prior purpose
-
-    /*DELETE t SELECT count(*)
-    FROM HHSurvey.Trip AS t JOIN HHSurvey.Trip AS prev_t ON t.person_id=prev_t.person_id AND t.tripnum - 1 = prev_t.tripnum
-    WHERE t.origin_geog.STEquals(t.dest_geog)=1 AND t.dest_purpose=prev_t.dest_purpose;*/
     
-    DELETE t
+    DELETE t 
     FROM HHSurvey.Trip AS t 
     LEFT JOIN HHSurvey.Trip AS prev_t ON t.person_id=prev_t.person_id AND t.tripnum - 1 = prev_t.tripnum
     LEFT JOIN HHSurvey.Trip AS next_t ON t.person_id=next_t.person_id AND t.tripnum + 1 = next_t.tripnum
     WHERE t.depart_time_timestamp=t.arrival_time_timestamp 
-        AND ((t.origin_geog.STEquals(prev_t.origin_geog)=1 AND t.dest_geog.STEquals(prev_t.dest_geog)=1) 
-        OR (t.origin_geog.STEquals(next_t.origin_geog)=1 AND t.dest_geog.STEquals(next_t.dest_geog)=1)) OR (t.origin_geog.STEquals(t.dest_geog)=1);
+        AND ((t.origin_geog.STEquals(prev_t.origin_geog)=1 AND t.dest_geog.STEquals(prev_t.dest_geog)=1)
+        OR (t.origin_geog.STEquals(t.dest_geog)=1)) AND t.dest_purpose=prev_t.dest_purpose;
 
     -- remove component records into separate table, starting w/ 2nd component (i.e., first is left in trip table).  The criteria here determine which get considered components.
     DROP TABLE IF EXISTS HHSurvey.trip_ingredients_done;

@@ -25,16 +25,18 @@ BEGIN
             MAX((CASE WHEN ti_agg.hhmember7 			IN (995) THEN -1 ELSE 1 END) * ti_agg.hhmember7 			 ) AS hhmember7, 
             MAX((CASE WHEN ti_agg.hhmember8 			IN (995) THEN -1 ELSE 1 END) * ti_agg.hhmember8 			 ) AS hhmember8, 
             MAX((CASE WHEN ti_agg.hhmember9 			IN (995) THEN -1 ELSE 1 END) * ti_agg.hhmember9 			 ) AS hhmember9, 
+            MAX((CASE WHEN ti_agg.hhmember10 			IN (995) THEN -1 ELSE 1 END) * ti_agg.hhmember10 			 ) AS hhmember10, 
+            MAX((CASE WHEN ti_agg.hhmember11			IN (995) THEN -1 ELSE 1 END) * ti_agg.hhmember11 			 ) AS hhmember11, 
+            MAX((CASE WHEN ti_agg.hhmember12 			IN (995) THEN -1 ELSE 1 END) * ti_agg.hhmember12 			 ) AS hhmember12, 
+            MAX((CASE WHEN ti_agg.hhmember13 			IN (995) THEN -1 ELSE 1 END) * ti_agg.hhmember13 			 ) AS hhmember13, 
             MAX((CASE WHEN ti_agg.travelers_hh 			IN (995) THEN -1 ELSE 1 END) * ti_agg.travelers_hh 			 ) AS travelers_hh, 				
             MAX((CASE WHEN ti_agg.travelers_nonhh 		IN (995) THEN -1 ELSE 1 END) * ti_agg.travelers_nonhh 		 ) AS travelers_nonhh,				
-            MAX((CASE WHEN ti_agg.travelers_total 		IN (995) THEN -1 ELSE 1 END) * ti_agg.travelers_total 		 ) AS travelers_total,								
-            MAX((CASE WHEN ti_agg.change_vehicles 		IN (995) THEN -1 ELSE 1 END) * ti_agg.change_vehicles 		 ) AS change_vehicles								
+            MAX((CASE WHEN ti_agg.travelers_total 		IN (995) THEN -1 ELSE 1 END) * ti_agg.travelers_total 		 ) AS travelers_total								
         FROM HHSurvey.trip_ingredient as ti_agg WHERE ti_agg.trip_link > 0 GROUP BY ti_agg.person_id, ti_agg.trip_link),
     cte_wndw AS	
     (SELECT 
             ti_wndw.person_id AS person_id2,
             ti_wndw.trip_link AS trip_link2,
-            FIRST_VALUE(ti_wndw.dest_label) 		OVER (PARTITION BY CONCAT(ti_wndw.person_id,ti_wndw.trip_link) ORDER BY ti_wndw.tripnum DESC) AS dest_label,
             FIRST_VALUE(ti_wndw.dest_purpose) 	OVER (PARTITION BY CONCAT(ti_wndw.person_id,ti_wndw.trip_link) ORDER BY ti_wndw.tripnum DESC) AS dest_purpose,
             FIRST_VALUE(ti_wndw.origin_purpose) OVER (PARTITION BY CONCAT(ti_wndw.person_id,ti_wndw.trip_link) ORDER BY ti_wndw.tripnum ASC) AS origin_purpose,
             FIRST_VALUE(ti_wndw.dest_is_home) 	OVER (PARTITION BY CONCAT(ti_wndw.person_id,ti_wndw.trip_link) ORDER BY ti_wndw.tripnum DESC) AS dest_is_home,
@@ -77,7 +79,6 @@ BEGIN
     -- this update achieves trip linking via revising elements of the 1st component (purposely left in the trip table).		
     UPDATE 	t
         SET t.dest_purpose 		= lt.dest_purpose * (CASE WHEN lt.dest_purpose IN(-97,-60) THEN -1 ELSE 1 END),	
-            t.dest_label 		= lt.dest_label,		
             t.modes				= lt.modes,
             t.dest_is_home		= lt.dest_is_home,					
             t.dest_is_work		= lt.dest_is_work,
@@ -87,16 +88,25 @@ BEGIN
             t.speed_mph			= CASE WHEN (lt.distance_miles > 0 AND (CAST(DATEDIFF_BIG (second, t.depart_time_timestamp, lt.arrival_time_timestamp) AS numeric) > 0)) 
                                     THEN  lt.distance_miles / (CAST(DATEDIFF_BIG (second, t.depart_time_timestamp, lt.arrival_time_timestamp) AS numeric)/3600) 
                                     ELSE 0 END,			   	
-            t.arrival_time_timestamp = lt.arrival_time_timestamp,	t.hhmember1 	= lt.hhmember1, 
-            t.distance_miles 	= lt.distance_miles, 		t.hhmember2 	= lt.hhmember2, 
-                                                                    t.hhmember3 	= lt.hhmember3, 
-            t.change_vehicles		= lt.change_vehicles, 			t.hhmember4 	= lt.hhmember4, 
-            t.travelers_hh 			= lt.travelers_hh, 				t.hhmember5 	= lt.hhmember5, 
-            t.travelers_nonhh 		= lt.travelers_nonhh, 			t.hhmember6 	= lt.hhmember6,
-            t.travelers_total 		= lt.travelers_total,			t.hhmember7 	= lt.hhmember7, 
-                                                                    t.hhmember8 	= lt.hhmember8, 
-                                                                    t.hhmember9 	= lt.hhmember9,				 	
-            t.revision_code = CONCAT(t.revision_code, '8,')
+            t.arrival_time_timestamp = lt.arrival_time_timestamp,
+            t.distance_miles  = lt.distance_miles,
+            t.travelers_hh 	  = lt.travelers_hh,
+            t.travelers_nonhh = lt.travelers_nonhh,
+            t.travelers_total = lt.travelers_total,	
+            t.hhmember1 	  = lt.hhmember1, 
+            t.hhmember2 	  = lt.hhmember2, 
+            t.hhmember3 	  = lt.hhmember3,                                                         
+            t.hhmember4 	  = lt.hhmember4,                                                        
+            t.hhmember5 	  = lt.hhmember5,                                                        
+            t.hhmember6 	  = lt.hhmember6,			 
+            t.hhmember7 	  = lt.hhmember7,  				 
+            t.hhmember8 	  = lt.hhmember8, 			
+            t.hhmember9 	  = lt.hhmember9,
+            t.hhmember10 	  = lt.hhmember10,  				 
+            t.hhmember11 	  = lt.hhmember11, 			
+            t.hhmember12 	  = lt.hhmember12,			
+            t.hhmember13 	  = lt.hhmember13,                                          				 	
+            t.revision_code   = CONCAT(t.revision_code, '8,')
         FROM HHSurvey.Trip AS t JOIN #linked_trips AS lt ON t.person_id = lt.person_id AND t.tripnum = lt.trip_link;
 
     --move the ingredients to another named table so this procedure can be re-run as sproc during manual cleaning
@@ -191,10 +201,10 @@ BEGIN
         AND NOT EXISTS (SELECT 1 FROM STRING_SPLIT(t2.modes,',') WHERE VALUE IN(SELECT mode_id FROM HHSurvey.transitmodes))),*/
         (SELECT t.recid, Elmer.dbo.rgx_replace(t.modes, '(?<=\b\1,.*)\b(\w+),?','',1) AS mode_reduced FROM HHSurvey.Trip AS t)
     UPDATE t
-        SET mode_1 = (SELECT match FROM Elmer.dbo.rgx_matches(cte.mode_reduced,'\b\d+\b',1) ORDER BY match_index OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY),
-            mode_2 = (SELECT match FROM Elmer.dbo.rgx_matches(cte.mode_reduced,'\b\d+\b',1) ORDER BY match_index OFFSET 1 ROWS FETCH NEXT 1 ROWS ONLY),
-            mode_3 = (SELECT match FROM Elmer.dbo.rgx_matches(cte.mode_reduced,'\b\d+\b',1) ORDER BY match_index OFFSET 2 ROWS FETCH NEXT 1 ROWS ONLY),
-            mode_4 = (SELECT match FROM Elmer.dbo.rgx_matches(cte.mode_reduced,'\b\d+\b',1) ORDER BY match_index OFFSET 3 ROWS FETCH NEXT 1 ROWS ONLY)
+        SET mode_1 = COALESCE((SELECT match FROM Elmer.dbo.rgx_matches(cte.mode_reduced,'\b\d+\b',1) ORDER BY match_index OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY), 995),
+            mode_2 = COALESCE((SELECT match FROM Elmer.dbo.rgx_matches(cte.mode_reduced,'\b\d+\b',1) ORDER BY match_index OFFSET 1 ROWS FETCH NEXT 1 ROWS ONLY), 995),
+            mode_3 = COALESCE((SELECT match FROM Elmer.dbo.rgx_matches(cte.mode_reduced,'\b\d+\b',1) ORDER BY match_index OFFSET 2 ROWS FETCH NEXT 1 ROWS ONLY), 995),
+            mode_4 = COALESCE((SELECT match FROM Elmer.dbo.rgx_matches(cte.mode_reduced,'\b\d+\b',1) ORDER BY match_index OFFSET 3 ROWS FETCH NEXT 1 ROWS ONLY), 995)
     FROM HHSurvey.Trip AS t JOIN cte ON t.recid = cte.recid AND EXISTS (SELECT 1 FROM #linked_trips AS lt WHERE lt.person_id =t.person_id AND lt.trip_link = t.tripnum)
     ;
 

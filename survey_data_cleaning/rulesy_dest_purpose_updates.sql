@@ -3,7 +3,7 @@
 */
 
 -- helper procedure
-    DROP PROCEDURE IF EXISTS HHSurvey.destname_purpose_revision;
+/*    DROP PROCEDURE IF EXISTS HHSurvey.destname_purpose_revision;
     GO
 
     CREATE PROCEDURE HHSurvey.destname_purpose_revision (@purpose int = NULL, @pattern nvarchar(50) = NULL)
@@ -13,7 +13,7 @@
         WHERE (t.dest_purpose=97 OR t.dest_purpose in(SELECT flag_value FROM HHSurvey.NullFlags))
             AND Elmer.dbo.rgx_find(t.dest_label,@pattern,1) = 1;
     GO
-
+*/
 -- primary procedure
     DROP PROCEDURE IF EXISTS HHSurvey.dest_purpose_updates;
     GO
@@ -25,12 +25,12 @@
             FROM HHSurvey.Trip AS t JOIN HHSurvey.household AS h ON t.hhid = h.hhid
             WHERE t.dest_is_home IS NULL AND t.dest_geog.STDistance(h.home_geog) < 300 AND
                 (t.dest_purpose = 1 
-                    OR t.dest_label = 'HOME' 
+                 /* OR t.dest_label = 'HOME' 
                     OR (
                     (Elmer.dbo.rgx_find(t.dest_label,' home',1) = 1 
                     OR Elmer.dbo.rgx_find(t.dest_label,'^h[om]?$',1) = 1) 
                     and Elmer.dbo.rgx_find(t.dest_label,'(their|her|s|from|near|nursing|friend) home',1) = 0
-                    )
+                    )*/
                     OR t.dest_geog.STDistance(h.home_geog) < 50);
 
         UPDATE t --Classify home purposes where destination code is absent; 50m proximity to home location on file
@@ -43,10 +43,10 @@
             SET t.dest_is_work = 1
             FROM HHSurvey.Trip AS t JOIN HHSurvey.person AS p ON t.person_id = p.person_id AND p.employment > 1
             WHERE t.dest_is_work IS NULL AND (t.dest_geog.STDistance(p.work_geog) < 300 OR p.work_geog IS NULL)
-                AND (t.dest_label = 'WORK' 
+                AND (/*t.dest_label = 'WORK' 
                     OR Elmer.dbo.rgx_find(t.dest_label,' work',1) = 1 
-                    OR Elmer.dbo.rgx_find(t.dest_label,'^w[or ]?$',1) = 1
-                    OR t.dest_purpose = 10);
+                    OR Elmer.dbo.rgx_find(t.dest_label,'^w[or ]?$',1) = 1*
+                    OR */t.dest_purpose = 10);
 
         UPDATE t --Classify work destinations where destination code is absent; 50m proximity to work location on file
             SET t.dest_purpose = 10, t.revision_code = CONCAT(t.revision_code,'5,')
@@ -57,7 +57,7 @@
                 AND t.dest_geog.STDistance(p.work_geog) < 50;
 
         UPDATE t --Classify school destinations where destination code is absent; 50m proximity to work location on file
-            SET t.dest_purpose = CASE WHEN p.age < 5 THEN 26 WHEN p.age < 19 THEN 21 WHEN p.age < 30 THEN 22 ELSE 6 END, t.revision_code = CONCAT(t.revision_code,'5,')
+            SET t.dest_purpose = CASE WHEN p.age_detailed < 5 THEN 26 WHEN p.age_detailed < 19 THEN 21 WHEN p.age_detailed < 30 THEN 22 ELSE 6 END, t.revision_code = CONCAT(t.revision_code,'5,')
             FROM HHSurvey.Trip AS t JOIN HHSurvey.person AS p ON t.person_id  = p.person_id AND p.student BETWEEN 2 and 7
                     LEFT JOIN HHSurvey.Trip AS next_t ON t.person_id = next_t.person_id AND t.tripnum + 1 = next_t.tripnum
             WHERE t.dest_purpose NOT IN(SELECT 1 FROM HHSurvey.ed_purposes)
@@ -76,15 +76,14 @@
             SET t.dest_purpose = 1, t.revision_code = CONCAT(t.revision_code,'1,')
             FROM HHSurvey.Trip AS t
             WHERE t.dest_purpose <> 1
-                AND t.dest_is_home = 1 
-                AND t.origin_label <> 'HOME';					
+                AND t.dest_is_home = 1;					
 
         UPDATE t --Change code to pickup when passenger number increases and duration is under 30 minutes
                 SET t.dest_purpose = 45, t.revision_code = CONCAT(t.revision_code,'2,')
             FROM HHSurvey.Trip AS t
                 JOIN HHSurvey.person AS p ON t.person_id=p.person_id 
                 JOIN HHSurvey.Trip AS next_t ON t.person_id=next_t.person_id	AND t.tripnum + 1 = next_t.tripnum						
-            WHERE p.age > 4 
+            WHERE p.age_detailed > 4 
                 AND (p.student = 1 OR p.student IS NULL or p.student in (select distinct [flag_value] from HHSurvey.NullFlags)) 
                 and (t.dest_purpose IN(SELECT purpose_id FROM HHSurvey.ed_purposes) 
                     or t.dest_purpose in(SELECT flag_value FROM HHSurvey.NullFlags)
@@ -98,7 +97,7 @@
             FROM HHSurvey.Trip AS t
                 JOIN HHSurvey.person AS p ON t.person_id=p.person_id 
                 JOIN HHSurvey.Trip AS next_t ON t.person_id=next_t.person_id	AND t.tripnum + 1 = next_t.tripnum						
-            WHERE p.age > 4 
+            WHERE p.age_detailed > 4 
                 AND (p.student = 1 OR p.student IS NULL or p.student in (SELECT flag_value FROM HHSurvey.NullFlags)) 
                 and (t.dest_purpose IN(SELECT purpose_id FROM HHSurvey.ed_purposes)
                     or t.dest_purpose in(SELECT flag_value FROM HHSurvey.NullFlags)
@@ -112,7 +111,7 @@
             FROM HHSurvey.Trip AS t
                 JOIN HHSurvey.person AS p ON t.person_id=p.person_id 
                 JOIN HHSurvey.Trip AS next_t ON t.person_id=next_t.person_id	AND t.tripnum + 1 = next_t.tripnum						
-            WHERE (p.age < 4 OR p.employment = 0) 
+            WHERE (p.age_detailed < 4 OR p.employment = 0) 
                 and t.dest_purpose IN(SELECT flag_value FROM HHSurvey.NullFlags)
                 AND t.travelers_total > next_t.travelers_total
                 AND DATEDIFF(minute, t.arrival_time_timestamp, next_t.depart_time_timestamp) < 30;					
@@ -122,7 +121,7 @@
             FROM HHSurvey.Trip AS t
                 JOIN HHSurvey.person AS p ON t.person_id=p.person_id 
                 JOIN HHSurvey.Trip AS next_t ON t.person_id=next_t.person_id	AND t.tripnum + 1 = next_t.tripnum						
-            WHERE (p.age < 4 OR p.employment = 0) 
+            WHERE (p.age_detailed < 4 OR p.employment = 0) 
                 and t.dest_purpose IN(SELECT flag_value FROM HHSurvey.NullFlags)
                 AND t.travelers_total < next_t.travelers_total
                 AND DATEDIFF(minute, t.arrival_time_timestamp, next_t.depart_time_timestamp) < 30;	
@@ -132,15 +131,15 @@
             FROM HHSurvey.Trip AS t
                 JOIN HHSurvey.person AS p ON t.person_id=p.person_id 
                 LEFT JOIN HHSurvey.Trip as next_t ON t.person_id=next_t.person_id AND t.tripnum + 1 = next_t.tripnum
-            WHERE p.age > 4 
+            WHERE p.age_detailed > 4 
                 AND (p.student = 1 OR p.student IS NULL or p.student in (select distinct [flag_value] from HHSurvey.NullFlags))
                 AND (t.travelers_total > 1 OR next_t.travelers_total > 1)
                 AND (t.dest_purpose IN(SELECT purpose_id FROM HHSurvey.ed_purposes)
-                    OR Elmer.dbo.rgx_find(t.dest_label,'(school|care)',1) = 1
+                    --OR Elmer.dbo.rgx_find(t.dest_label,'(school|care)',1) = 1
                 )
                 AND DATEDIFF(Minute, t.arrival_time_timestamp, next_t.depart_time_timestamp) Between 30 and 240;
 
-        UPDATE t --updates empty purpose code to 'school' when single student traveler with school destination and duration > 30 minutes.
+       /* UPDATE t --updates empty purpose code to 'school' when single student traveler with school destination and duration > 30 minutes.
             SET t.dest_purpose = 6, t.revision_code = CONCAT(t.revision_code,'4,')
             FROM HHSurvey.Trip AS t
                 JOIN HHSurvey.Trip as next_t ON t.hhid=next_t.hhid AND t.person_id=next_t.person_id AND t.tripnum + 1 = next_t.tripnum
@@ -149,7 +148,7 @@
                 AND t.dest_label = 'school'
                 AND t.travelers_total = 1
                 and p.student > 1
-                AND DATEDIFF(Minute, t.arrival_time_timestamp, next_t.depart_time_timestamp) > 30;	
+                AND DATEDIFF(Minute, t.arrival_time_timestamp, next_t.depart_time_timestamp) > 30;	*/
 
         UPDATE t --updates empty purpose code to 'school' when single student traveler with school destination and duration > 30 minutes; 50m proximity to school location on file
             SET t.dest_purpose = 6, t.revision_code = CONCAT(t.revision_code,'4,')
@@ -175,12 +174,12 @@
                     )
                 AND t.dest_is_work = 1;
 
-        UPDATE t  
+       /* UPDATE t  
             SET t.dest_purpose = 11, t.revision_code = CONCAT(t.revision_code,'5,') 
             FROM HHSurvey.Trip AS t 
             WHERE (t.dest_purpose IN(97,60) OR t.dest_purpose in(SELECT flag_value FROM HHSurvey.NullFlags))
                 AND t.dest_is_work IS NULL
-                AND t.dest_label = 'WORK';
+                AND t.dest_label = 'WORK';*/
 
         EXECUTE HHSurvey.destname_purpose_revision @purpose = 30, @pattern = '(grocery|costco|safeway|trader ?joe|qfc)';
         EXECUTE HHSurvey.destname_purpose_revision @purpose = 32, @pattern = '\b(store)\b';

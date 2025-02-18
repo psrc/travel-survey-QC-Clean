@@ -45,7 +45,7 @@ AS BEGIN
         (SELECT t1.recid, t1.person_id, t1.tripnum,	           				   			                  'ends day, not home' AS error_flag
         FROM trip_ref AS t1 JOIN hhts_cleaning.HHSurvey.Household AS h ON t1.hhid = h.hhid
         LEFT JOIN trip_ref AS t_next ON t1.person_id = t_next.person_id AND t1.tripnum + 1 = t_next.tripnum
-            JOIN HHSurvey.Person AS p1 ON t1.person_id=p1.person_id AND p1.age BETWEEN 5 AND 12
+            JOIN HHSurvey.Person AS p1 ON t1.person_id=p1.person_id AND p1.age_detailed BETWEEN 5 AND 12
             WHERE DATEDIFF(Day, (CASE WHEN DATEPART(Hour, t1.arrival_time_timestamp) < 3 
                                       THEN DATEADD(Hour, -3, t1.arrival_time_timestamp) 
                                       ELSE t1.arrival_time_timestamp END),
@@ -58,13 +58,13 @@ AS BEGIN
                 AND t_next.dest_purpose NOT IN(SELECT purpose_id FROM HHSurvey.sleepstay_purposes))) --allow for graveyard shift work, activities that cross 3am boundary
             --AND Elmer.dbo.rgx_find(t1.psrc_comment,'ADD RETURN HOME \d?\d:\d\d',1) = 0
             AND t1.dest_geog.STDistance(h.home_geog) > 300
-            AND NOT EXISTS (SELECT 1 FROM dayends AS de WHERE t1.person_id = de.person_id AND t1.dest_geog.STDistance(de.loc_geog) < 300)
+            AND NOT EXISTS (SELECT 1 FROM #dayends AS de WHERE t1.person_id = de.person_id AND t1.dest_geog.STDistance(de.loc_geog) < 300)
             AND Elmer.dbo.rgx_find(t1.modes,'31',1) = 0		
 
         UNION ALL SELECT t_next.recid, t_next.person_id, t_next.tripnum,	           		   		   'starts, not from home' AS error_flag
         FROM trip_ref AS t2 JOIN trip_ref AS t_next ON t2.person_id = t_next.person_id AND t2.tripnum + 1 = t_next.tripnum
             WHERE DATEDIFF(Day, t2.arrival_time_timestamp, t_next.depart_time_timestamp) = 1 -- t_next is first trip of the day
-                AND t2.dest_is_home IS NULL AND Elmer.dbo.TRIM(t_next.origin_label)<>'HOME' AND t2.origin_purpose NOT IN(SELECT purpose_id FROM HHSurvey.sleepstay_purposes)
+                AND t2.dest_is_home IS NULL AND t2.origin_purpose NOT IN(SELECT purpose_id FROM HHSurvey.sleepstay_purposes)
                 AND DATEPART(Hour, t_next.depart_time_timestamp) > 1  -- Night owls typically home before 2am
 
             UNION ALL SELECT t3.recid, t3.person_id, t3.tripnum, 									       		 'purpose missing' AS error_flag
@@ -94,10 +94,10 @@ AS BEGIN
             GROUP BY  t7.person_id 
             HAVING count(*)=1
 
-        UNION ALL SELECT  t8.recid,  t8.person_id,  t8.tripnum,									        	'underage driver' AS error_flag
+        UNION ALL SELECT  t8.recid,  t8.person_id,  t8.tripnum,									        	'underage_detailed driver' AS error_flag
             FROM hhts_cleaning.HHSurvey.Person AS p
             JOIN trip_ref AS t8 ON p.person_id = t8.person_id
-            WHERE t8.driver = 1 AND (p.age BETWEEN 1 AND 3)
+            WHERE t8.driver = 1 AND (p.age_detailed BETWEEN 1 AND 3)
 
         UNION ALL SELECT  t9.recid,  t9.person_id,  t9.tripnum, 									      'unlicensed driver' AS error_flag
             FROM trip_ref as t9 JOIN hhts_cleaning.HHSurvey.Person AS p ON p.person_id = t9.person_id
@@ -157,12 +157,12 @@ AS BEGIN
 
         UNION ALL SELECT t20.recid, t20.person_id, t20.tripnum,					                        'missing next trip link' AS error_flag
         FROM trip_ref AS t20 JOIN HHSurvey.Trip AS t_next ON  t20.person_id = t_next.person_id AND t20.tripnum + 1 = t_next.tripnum
-                                JOIN HHSurvey.Person AS p ON t20.person_id=p.person_id AND p.age BETWEEN 5 AND 12
+                                JOIN HHSurvey.Person AS p ON t20.person_id=p.person_id AND p.age_detailed BETWEEN 5 AND 12
             WHERE ABS(t20.dest_geog.STDistance(t_next.origin_geog)) > 500  --500m difference or more
 
         /*UNION ALL SELECT t_next.recid, t_next.person_id, t_next.tripnum,	              	           'missing prior trip link' AS error_flag
         FROM trip_ref AS t21 JOIN HHSurvey.Trip AS t_next ON t21.person_id = t_next.person_id AND  t21.tripnum + 1 = t_next.tripnum
-                                JOIN HHSurvey.Person AS p ON t21.person_id=p.person_id AND p.age BETWEEN 5 AND 12
+                                JOIN HHSurvey.Person AS p ON t21.person_id=p.person_id AND p.age_detailed BETWEEN 5 AND 12
             WHERE ABS(t21.dest_geog.STDistance(t_next.origin_geog)) > 500	--500m difference or more*/			
 
         UNION ALL SELECT t22.recid, t22.person_id, t22.tripnum,	              	 			 			 '"change mode" purpose' AS error_flag	
@@ -208,7 +208,7 @@ AS BEGIN
         UNION ALL SELECT t25.recid, t25.person_id, t25.tripnum, 		  				   		          'non-student + school trip' AS error_flag
             FROM trip_ref AS t25 JOIN HHSurvey.Trip as t_next ON t25.person_id = t_next.person_id AND t25.tripnum + 1 = t_next.tripnum JOIN hhts_cleaning.HHSurvey.Person ON t25.person_id=person.person_id 					
             WHERE t25.dest_purpose IN(SELECT purpose_id FROM HHSurvey.ed_purposes)		
-                AND (person.student=1) AND person.age > 4					
+                AND (person.student=1) AND person.age_detailed > 4					
             )
 
     INSERT INTO HHSurvey.trip_error_flags (recid, person_id, tripnum, error_flag)

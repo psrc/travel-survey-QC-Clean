@@ -27,8 +27,10 @@ AS BEGIN
                [arrival_time_timestamp] datetime2 NULL,
                [origin_lat] [float] NULL,
                [origin_lng] [float] NULL,
+               [origin_label] [nvarchar](255) NULL,
                [dest_lat] [float] NULL,
                [dest_lng] [float] NULL,
+               [dest_label] [nvarchar](255) NULL,
                [distance_miles] [float] NULL,
                travel_time float null, -- duration as single field
                [hhmember1] decimal(19,0) NULL,
@@ -40,10 +42,6 @@ AS BEGIN
                [hhmember7] decimal(19,0) NULL,
                [hhmember8] decimal(19,0) NULL,
                [hhmember9] decimal(19,0) NULL,
-               [hhmember10] decimal(19,0) NOT NULL,
-               [hhmember11] decimal(19,0) NOT NULL,
-               [hhmember12] decimal(19,0) NOT NULL,
-               [hhmember13] decimal(19,0) NOT NULL,
                [travelers_hh] [int] NOT NULL,
                [travelers_nonhh] [int] NOT NULL,
                [travelers_total] [int] NOT NULL,
@@ -58,6 +56,7 @@ AS BEGIN
                [mode_4] smallint NULL,
                mode_type int null,
                [driver] smallint NULL,
+               [change_vehicles] smallint NULL,
                [is_access] smallint NULL,
                [is_egress] smallint NULL,
                [has_access] smallint NULL,
@@ -65,7 +64,7 @@ AS BEGIN
                [mode_acc] smallint NULL,
                [mode_egr] smallint NULL,
                [speed_mph] [float] NULL,
-               trace_quality_flag nvarchar(20) NULL,
+               trace_quality_flag smallint NULL,
                [user_added] smallint null,
                [user_merged] smallint NULL,
                [user_split] smallint NULL,
@@ -73,6 +72,7 @@ AS BEGIN
                [analyst_split] smallint NULL,
                [analyst_split_loop] smallint null,
                [day_id] [bigint] NOT NULL,
+               [travel_day] [int] NOT NULL,
                [travel_date] [date] NOT NULL,
                [travel_dow] [int] NOT NULL,
                [day_iscomplete] [smallint] NULL,
@@ -93,21 +93,38 @@ AS BEGIN
                [d_puma10] [int] NULL,
                [d_bg] [bigint] NULL,
                [distance_meters] [float] NULL,
-               [duration_minutes] [int] NULL,
-               [duration_seconds] [int] NULL,
-               [speed_flag] [int] NULL,
-               [dwell_mins] [float] NULL,
+               [duration_minutes] [int] NOT NULL,
+               [duration_seconds] [int] NOT NULL,
+               [speed_flag] [int] NOT NULL,
+               [dwell_mins] [float] NOT NULL,
+               [days_first_trip] [int] NOT NULL,
+               [days_last_trip] [int] NOT NULL,
                [mode_other_specify] [nvarchar](1000)  NULL,
-               [is_transit] [int] NULL,
-               [flag_teleport] [int] NULL,
-               [trip_weight] [int] NULL,
-               [survey_year] [int] NOT NULL
+               [is_transit] [int] NOT NULL,
+               [hhmember10] [int] NOT NULL,
+               [hhmember11] [int] NOT NULL,
+               [hhmember12] [int] NOT NULL,
+               [taxi_cost_known] [int] NOT NULL,
+               [taxi_cost_int] [int] NULL,
+               [flag_teleport] [int] NOT NULL,
+               [pt_density] [float] NULL,
+               [point_dist_index] [float] NULL,
+               [trip_weight] [int] NOT NULL,
+               [survey_year] [int] NOT NULL,
+               [day_is_complete_a] [smallint] NULL,
+               [day_is_complete_b] [smallint] NULL,
+               [hh_day_iscomplete] [smallint] NULL,
+               [hh_day_iscomplete_a] [smallint] NULL,
+               [hh_day_iscomplete_b] [smallint] NULL,
+               [psrc_comment] NVARCHAR(255) NULL,
+               [psrc_resolved] smallint NULL,
+               PRIMARY KEY CLUSTERED ([recid])
           );
           COMMIT TRANSACTION;
 
         BEGIN TRANSACTION;
           INSERT INTO HHSurvey.Trip(
-                [hhid]
+               [hhid]
                ,[person_id]
                ,[pernum]
                ,[tripid]
@@ -120,8 +137,10 @@ AS BEGIN
                ,[arrival_time_timestamp]
                ,[origin_lat]
                ,[origin_lng]
+               ,[origin_label]
                ,[dest_lat]
                ,[dest_lng]
+               ,[dest_label]
                ,[distance_miles]
                ,[travel_time]
                ,[hhmember1]
@@ -133,10 +152,6 @@ AS BEGIN
                ,[hhmember7]
                ,[hhmember8]
                ,[hhmember9]
-               ,[hhmember10]
-               ,[hhmember11]
-               ,[hhmember12]
-               ,[hhmember13]
                ,[travelers_hh]
                ,[travelers_nonhh]
                ,[travelers_total]
@@ -151,6 +166,7 @@ AS BEGIN
                ,[mode_4]
                ,mode_type               
                ,[driver]
+               ,[change_vehicles]
                ,[is_access]
                ,[is_egress]
                ,[has_access]
@@ -166,6 +182,7 @@ AS BEGIN
                ,[analyst_split]
                ,[analyst_split_loop]
                ,[day_id]
+               ,[travel_day]
                ,[travel_date] 
                ,[travel_dow] 
                ,[day_iscomplete]
@@ -190,11 +207,25 @@ AS BEGIN
                ,[duration_seconds]
                ,[speed_flag]
                ,[dwell_mins]
+               ,[days_first_trip] 
+               ,[days_last_trip]
                ,[mode_other_specify]
                ,[is_transit]
+               ,[hhmember10]
+               ,[hhmember11]
+               ,[hhmember12]
+               ,[taxi_cost_known]
+               ,[taxi_cost_int]
                ,[flag_teleport]
+               ,[pt_density]
+               ,[point_dist_index]
                ,[trip_weight]
                ,[survey_year] 
+               ,[day_is_complete_a]
+               ,[day_is_complete_b]
+               ,[hh_day_iscomplete]
+               ,[hh_day_iscomplete_a]
+               ,[hh_day_iscomplete_b]
                               )
           SELECT
                CAST(hhid AS decimal(19,0) )
@@ -217,8 +248,10 @@ AS BEGIN
                                 CAST(arrival_time_minute AS int), 0, 0, 0)
                ,CAST(origin_lat AS [float])
                ,CAST(origin_lng AS [float])
+               ,CAST(origin_label AS [nvarchar](255))
                ,CAST(dest_lat AS [float])
-               ,CAST(dest_lng AS [float])            
+               ,CAST(dest_lng AS [float])
+               ,CAST(dest_label AS [nvarchar](255))               
                ,CAST(distance_miles AS [float])
                ,CAST([duration_minutes] AS FLOAT) + [duration_seconds]/60
                ,CAST(hhmember1 AS decimal(19,0))
@@ -229,14 +262,10 @@ AS BEGIN
                ,CAST(hhmember6 AS decimal(19,0))
                ,CAST(hhmember7 AS decimal(19,0))
                ,CAST(hhmember8 AS decimal(19,0))
-               ,CAST(hhmember9 AS decimal(19,0))
-               ,CAST(hhmember10 AS decimal(19,0))
-               ,CAST(hhmember11 AS decimal(19,0))
-               ,CAST(hhmember12 AS decimal(19,0))
-               ,CAST(hhmember13 AS decimal(19,0))
-               ,CAST(COALESCE(travelers_hh,1) AS [int])
-               ,CAST(travelers_nonhh AS [int])
-               ,CAST(travelers_total AS [int])
+               ,NULL
+               ,CAST(travelers_hh AS [int] )
+               ,CAST(travelers_nonhh AS [int] )
+               ,CAST(travelers_total AS [int] )
                ,CAST(origin_purpose AS [int])
                ,CAST(origin_purpose_cat AS int)
                ,CAST(dest_purpose AS [int])
@@ -245,17 +274,18 @@ AS BEGIN
                ,cast([mode_1] as smallint)
                ,cast([mode_2] as smallint)
                ,cast([mode_3] as smallint)
-               ,NULL --cast([mode_4] as smallint)
+               ,cast([mode_4] as smallint)
                ,CAST(mode_type AS int)
-               ,cast([driver] as smallint) 
+               ,cast([driver] as smallint)
+               ,cast([change_vehicles] as smallint)
                ,cast([is_access] as smallint)
-               ,cast([is_egress] as smallint)
+               ,cast([is_egress] as smallint)     
                ,cast([has_access] as smallint)
-               ,cast([has_egress] as smallint)  
+               ,cast([has_egress] as smallint)     
                ,cast([mode_acc] as smallint)
                ,cast([mode_egr] as smallint)
                ,CAST(speed_mph AS [float])
-               ,CAST(transit_quality_flag AS nvarchar(20))
+               ,CAST(trace_quality_flag AS nvarchar(20))
                ,CAST(user_added AS smallint)
                ,CAST(user_merged AS smallint)
                ,CAST(user_split AS smallint)
@@ -263,16 +293,17 @@ AS BEGIN
                ,CAST(analyst_split AS smallint)
                ,CAST(analyst_split_loop AS smallint)
                ,CAST(day_id AS bigint)
+               ,CAST(travel_day AS smallint)
                ,CAST(travel_date AS date)
                ,CAST(travel_dow AS  smallint)
                ,CAST(day_iscomplete AS smallint)
                ,CAST(depart_date as date)
-               ,CAST(depart_dow AS  smallint)
+               ,CAST(depart_dow as smallint)
                ,CAST(depart_time_hour as smallint)
                ,CAST(depart_time_minute as smallint)
                ,CAST(depart_time_second as smallint)
                ,CAST(arrive_date as date)
-               ,CAST(arrive_dow AS  smallint)
+               ,CAST(arrive_dow as smallint)
                ,CAST(arrival_time_hour as smallint)
                ,CAST(arrival_time_minute as smallint)
                ,CAST(arrival_time_second as smallint)
@@ -287,12 +318,26 @@ AS BEGIN
                ,CAST(duration_seconds as int)
                ,CAST(speed_flag as int)
                ,CAST(dwell_mins as float)
+               ,CAST(days_first_trip as int)
+               ,CAST(days_last_trip as int)
                ,CAST(mode_other_specify as nvarchar(1000))
                ,CAST(is_transit as int)
+               ,CAST(hhmember10 as int)
+               ,CAST(hhmember11 as int)
+               ,CAST(hhmember12 as int)
+               ,CAST(taxi_cost_known as int)
+               ,CAST(taxi_cost_int as int)
                ,CAST(flag_teleport as int)
+               ,CAST(pt_density as float)
+               ,CAST(point_dist_index as float)
                ,CAST(trip_weight as int)
                ,CAST(survey_year as int)
-               FROM Elmer.stg.hhsurvey25_unlinked_trip
+               ,CAST(day_is_complete_a as smallint)
+               ,CAST(day_is_complete_b as smallint)
+               ,CAST(hh_day_iscomplete as smallint)
+               ,CAST(hh_day_iscomplete_a as smallint)
+               ,CAST(hh_day_iscomplete_b as smallint)
+               FROM HouseholdTravelSurvey2023.[combined_data].[v_trip]
                ORDER BY tripid;
           COMMIT TRANSACTION;
 
@@ -329,12 +374,7 @@ AS BEGIN
             SET work_geog = geography::STGeomFromText('POINT(' + CAST(work_lng       AS VARCHAR(20)) + ' ' + CAST(work_lat       AS VARCHAR(20)) + ')', 4326),
               school_geog = geography::STGeomFromText('POINT(' + CAST(school_loc_lng AS VARCHAR(20)) + ' ' + CAST(school_loc_lat AS VARCHAR(20)) + ')', 4326);
 
-          ALTER TABLE HHSurvey.Household ALTER COLUMN hhid decimal(19,0) NOT NULL;
-          ALTER TABLE HHSurvey.Person ALTER COLUMN person_id decimal(19,0) NOT NULL;
-
           ALTER TABLE HHSurvey.Trip ADD CONSTRAINT PK_recid PRIMARY KEY CLUSTERED (recid) WITH FILLFACTOR=80;
-          ALTER TABLE HHSurvey.Household ADD CONSTRAINT PK_hhid PRIMARY KEY CLUSTERED (hhid) WITH FILLFACTOR=80;
-          ALTER TABLE HHSurvey.Person ADD CONSTRAINT PK_person_id PRIMARY KEY CLUSTERED (person_id) WITH FILLFACTOR=80;
           CREATE INDEX person_idx          ON HHSurvey.Trip(person_id ASC);
           CREATE INDEX tripnum_idx         ON HHSurvey.Trip(tripnum ASC);
           CREATE INDEX dest_purpose_idx    ON HHSurvey.Trip(dest_purpose);
