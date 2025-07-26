@@ -54,7 +54,7 @@ DECLARE @BingKey nvarchar = ['use your Bing API key here']
 			INSERT INTO HHSurvey.under4hr_purposes (purpose_id)  VALUES (32),(33),(50),(51),(53),(54),(56),(60),(61);
 
 		--Null values
-			INSERT INTO HHSurvey.NullFlags (flag_value) VALUES (-9999),(-9998),(-9997),(995),(-1);
+			INSERT INTO HHSurvey.NullFlags (flag_value) VALUES (-9999),(-9998),(-9997),(-995),(-1);
 
 	-- Verify/update hardcodes in HHSurvey.dest_purpose_updates: purpose 1 (home), 6 (general school), 45 (drop off), 46 (pick up), 54 (family activity), 60 (change mode), 97 (other); student 1 (not a student)
 	-- Verify/update hardcodes in HHSurvey.generate_error_flags: purpose 1 (home), 30 (grocery shopping); mode 31 (air), mode 32 (ferry); student 1 (not a student)

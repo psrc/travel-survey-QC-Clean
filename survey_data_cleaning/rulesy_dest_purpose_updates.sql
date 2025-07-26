@@ -2,18 +2,6 @@
 -- Hardcodes requiring confirmation: purpose 1 (home), 6 (general school), 45 (drop off), 46 (pick up), 54 (family activity), 60 (change mode), 97 (other); student 1 (not a student)
 */
 
--- helper procedure
-/*    DROP PROCEDURE IF EXISTS HHSurvey.destname_purpose_revision;
-    GO
-
-    CREATE PROCEDURE HHSurvey.destname_purpose_revision (@purpose int = NULL, @pattern nvarchar(50) = NULL)
-    AS UPDATE t 
-    SET t.dest_purpose = @purpose, t.revision_code = CONCAT(t.revision_code,'5,') 
-        FROM HHSurvey.Trip AS t 
-        WHERE (t.dest_purpose=97 OR t.dest_purpose in(SELECT flag_value FROM HHSurvey.NullFlags))
-            AND Elmer.dbo.rgx_find(t.dest_label,@pattern,1) = 1;
-    GO
-*/
 -- primary procedure
     DROP PROCEDURE IF EXISTS HHSurvey.dest_purpose_updates;
     GO
@@ -25,13 +13,7 @@
             FROM HHSurvey.Trip AS t JOIN HHSurvey.household AS h ON t.hhid = h.hhid
             WHERE t.dest_is_home IS NULL AND t.dest_geog.STDistance(h.home_geog) < 300 AND
                 (t.dest_purpose = 1 
-                 /* OR t.dest_label = 'HOME' 
-                    OR (
-                    (Elmer.dbo.rgx_find(t.dest_label,' home',1) = 1 
-                    OR Elmer.dbo.rgx_find(t.dest_label,'^h[om]?$',1) = 1) 
-                    and Elmer.dbo.rgx_find(t.dest_label,'(their|her|s|from|near|nursing|friend) home',1) = 0
-                    )*/
-                    OR t.dest_geog.STDistance(h.home_geog) < 50);
+                 OR t.dest_geog.STDistance(h.home_geog) < 50);
 
         UPDATE t --Classify home purposes where destination code is absent; 50m proximity to home location on file
             SET t.dest_purpose = 1, 
@@ -43,10 +25,7 @@
             SET t.dest_is_work = 1
             FROM HHSurvey.Trip AS t JOIN HHSurvey.person AS p ON t.person_id = p.person_id AND p.employment > 1
             WHERE t.dest_is_work IS NULL AND (t.dest_geog.STDistance(p.work_geog) < 300 OR p.work_geog IS NULL)
-                AND (/*t.dest_label = 'WORK' 
-                    OR Elmer.dbo.rgx_find(t.dest_label,' work',1) = 1 
-                    OR Elmer.dbo.rgx_find(t.dest_label,'^w[or ]?$',1) = 1*
-                    OR */t.dest_purpose = 10);
+                AND (t.dest_purpose = 10);
 
         UPDATE t --Classify work destinations where destination code is absent; 50m proximity to work location on file
             SET t.dest_purpose = 10, t.revision_code = CONCAT(t.revision_code,'5,')
@@ -63,14 +42,6 @@
             WHERE t.dest_purpose NOT IN(SELECT 1 FROM HHSurvey.ed_purposes)
                 AND t.dest_purpose in(SELECT flag_value FROM HHSurvey.NullFlags UNION SELECT 60 UNION SELECT 97)
                 AND t.dest_geog.STDistance(p.school_geog) < 50;		
-                
-        /*UPDATE t --revises purpose field for return portion of a single stop loop trip 
-            SET t.dest_purpose = (CASE WHEN t.dest_is_home = 1 THEN 1 WHEN t.dest_is_work = 1 THEN 10 ELSE t.dest_purpose END), t.revision_code = CONCAT(t.revision_code,'1,')
-            FROM HHSurvey.Trip AS t
-                JOIN HHSurvey.Trip AS prev_t on t.person_id=prev_t.person_id AND t.tripnum - 1 = prev_t.tripnum
-            WHERE ((t.dest_purpose<>1 and t.dest_is_home = 1) 
-                OR (t.dest_purpose NOT IN(SELECT purpose_id FROM HHSurvey.work_purposes) and t.dest_is_work = 1))
-                AND t.dest_purpose=prev_t.dest_purpose;*/ -- Seems largely to duplicate above steps.
 
         UPDATE t --revises purpose field for home return portion of a single stop loop trip 
             SET t.dest_purpose = 1, t.revision_code = CONCAT(t.revision_code,'1,')
@@ -139,17 +110,6 @@
                 )
                 AND DATEDIFF(Minute, t.arrival_time_timestamp, next_t.depart_time_timestamp) Between 30 and 240;
 
-       /* UPDATE t --updates empty purpose code to 'school' when single student traveler with school destination and duration > 30 minutes.
-            SET t.dest_purpose = 6, t.revision_code = CONCAT(t.revision_code,'4,')
-            FROM HHSurvey.Trip AS t
-                JOIN HHSurvey.Trip as next_t ON t.hhid=next_t.hhid AND t.person_id=next_t.person_id AND t.tripnum + 1 = next_t.tripnum
-                JOIN HHSurvey.person AS p ON t.person_id = p.person_id
-            WHERE t.dest_purpose=97
-                AND t.dest_label = 'school'
-                AND t.travelers_total = 1
-                and p.student > 1
-                AND DATEDIFF(Minute, t.arrival_time_timestamp, next_t.depart_time_timestamp) > 30;	*/
-
         UPDATE t --updates empty purpose code to 'school' when single student traveler with school destination and duration > 30 minutes; 50m proximity to school location on file
             SET t.dest_purpose = 6, t.revision_code = CONCAT(t.revision_code,'4,')
             FROM HHSurvey.Trip AS t JOIN HHSurvey.person AS p ON t.hhid = p.hhid
@@ -173,26 +133,6 @@
                     or t.dest_purpose IN(97,60)
                     )
                 AND t.dest_is_work = 1;
-
-       /* UPDATE t  
-            SET t.dest_purpose = 11, t.revision_code = CONCAT(t.revision_code,'5,') 
-            FROM HHSurvey.Trip AS t 
-            WHERE (t.dest_purpose IN(97,60) OR t.dest_purpose in(SELECT flag_value FROM HHSurvey.NullFlags))
-                AND t.dest_is_work IS NULL
-                AND t.dest_label = 'WORK';*/
-
-        EXECUTE HHSurvey.destname_purpose_revision @purpose = 30, @pattern = '(grocery|costco|safeway|trader ?joe|qfc)';
-        EXECUTE HHSurvey.destname_purpose_revision @purpose = 32, @pattern = '\b(store)\b';
-        EXECUTE HHSurvey.destname_purpose_revision @purpose = 33, @pattern = '\b(bank|gas|post ?office|library|barber|hair)\b';
-        EXECUTE HHSurvey.destname_purpose_revision @purpose = 34, @pattern = '(doctor|dentist|hospital|medical|health)';
-        EXECUTE HHSurvey.destname_purpose_revision @purpose = 50, @pattern = '(coffee|cafe|starbucks|lunch)';
-        EXECUTE HHSurvey.destname_purpose_revision @purpose = 51, @pattern = 'dog.*(walk|park)';
-        EXECUTE HHSurvey.destname_purpose_revision @purpose = 51, @pattern = '(walk|park).*dog';
-        EXECUTE HHSurvey.destname_purpose_revision @purpose = 51, @pattern = '\bwalk$';
-        EXECUTE HHSurvey.destname_purpose_revision @purpose = 51, @pattern = '\bgym$';
-        EXECUTE HHSurvey.destname_purpose_revision @purpose = 53, @pattern = 'casino';
-        EXECUTE HHSurvey.destname_purpose_revision @purpose = 54, @pattern = '(church|volunteer)';
-        EXECUTE HHSurvey.destname_purpose_revision @purpose = 60, @pattern = '\b(bus|transit|ferry|airport|station)\b';
 
         UPDATE t
         SET t.origin_purpose = t_prev.dest_purpose
