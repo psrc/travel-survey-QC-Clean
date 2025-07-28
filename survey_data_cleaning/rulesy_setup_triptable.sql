@@ -22,7 +22,6 @@ AS BEGIN
                [traveldate] datetime2 NULL,
                [daynum] [int] NULL,
                [copied_trip] [int] NULL,
-               [svy_complete] [int] NULL,
                [depart_time_timestamp] datetime2 NULL,
                [arrival_time_timestamp] datetime2 NULL,
                [origin_lat] [float] NULL,
@@ -75,23 +74,6 @@ AS BEGIN
                [day_id] [bigint] NOT NULL,
                [travel_date] [date] NOT NULL,
                [travel_dow] [int] NOT NULL,
-               [day_iscomplete] [smallint] NULL,
-               [depart_date] [date] NOT NULL,
-               [depart_dow] [int] NOT NULL,
-               [depart_time_hour] [int] NOT NULL,
-               [depart_time_minute] [int] NOT NULL,
-               [depart_time_second] [int] NOT NULL,
-               [arrive_date] [date] NOT NULL,
-               [arrive_dow] [int] NOT NULL,
-               [arrival_time_hour] [int] NOT NULL,
-               [arrival_time_minute] [int] NOT NULL,
-               [arrival_time_second] [int] NOT NULL,
-               [o_in_region] [int] NOT NULL,
-               [o_puma10] [int] NULL,
-               [o_bg] [bigint] NULL,
-               [d_in_region] [int] NOT NULL,
-               [d_puma10] [int] NULL,
-               [d_bg] [bigint] NULL,
                [distance_meters] [float] NULL,
                [duration_minutes] [int] NULL,
                [duration_seconds] [int] NULL,
@@ -115,7 +97,6 @@ AS BEGIN
                ,[traveldate]
                ,[daynum]
                ,[copied_trip]
-               ,[svy_complete]
                ,[depart_time_timestamp]
                ,[arrival_time_timestamp]
                ,[origin_lat]
@@ -168,23 +149,6 @@ AS BEGIN
                ,[day_id]
                ,[travel_date] 
                ,[travel_dow] 
-               ,[day_iscomplete]
-               ,[depart_date] 
-               ,[depart_dow]
-               ,[depart_time_hour]
-               ,[depart_time_minute]
-               ,[depart_time_second]
-               ,[arrive_date]
-               ,[arrive_dow]
-               ,[arrival_time_hour]
-               ,[arrival_time_minute]
-               ,[arrival_time_second]
-               ,[o_in_region]
-               ,[o_puma10]
-               ,[o_bg]
-               ,[d_in_region]
-               ,[d_puma10]
-               ,[d_bg]
                ,[distance_meters]
                ,[duration_minutes]
                ,[duration_seconds]
@@ -205,7 +169,6 @@ AS BEGIN
                ,convert(date, [travel_date], 121)
                ,CAST(daynum AS [int])
                ,CAST(copied_trip AS [int])
-               ,CAST(svy_complete AS [int])
                ,DATETIME2FROMPARTS(CAST(LEFT(depart_date, 4) AS int), 
                                 CAST(SUBSTRING(CAST(depart_date AS nvarchar), 6, 2) AS int), 
                                 CAST(RIGHT(depart_date, 2) AS int), CAST(depart_time_hour AS int), 
@@ -265,23 +228,6 @@ AS BEGIN
                ,CAST(day_id AS bigint)
                ,CAST(travel_date AS date)
                ,CAST(travel_dow AS  smallint)
-               ,CAST(day_iscomplete AS smallint)
-               ,CAST(depart_date as date)
-               ,CAST(depart_dow AS  smallint)
-               ,CAST(depart_time_hour as smallint)
-               ,CAST(depart_time_minute as smallint)
-               ,CAST(depart_time_second as smallint)
-               ,CAST(arrive_date as date)
-               ,CAST(arrive_dow AS  smallint)
-               ,CAST(arrival_time_hour as smallint)
-               ,CAST(arrival_time_minute as smallint)
-               ,CAST(arrival_time_second as smallint)
-               ,CAST(o_in_region as int)
-               ,CAST(o_puma10 as int)
-               ,CAST(o_bg as bigint)
-               ,CAST(d_in_region as int)
-               ,CAST(d_puma10 as int)
-               ,CAST(d_bg as bigint)
                ,CAST(distance_meters as float)
                ,CAST(duration_minutes as int)
                ,CAST(duration_seconds as int)
