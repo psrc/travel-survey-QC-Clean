@@ -43,7 +43,7 @@ CASE WHEN h.hh_iscomplete_b=1 THEN 'complete' ELSE 'incomplete' END;
 SELECT error_flag, [1] AS rMove, [2] AS rSurvey
 FROM
 (SELECT CASE WHEN h.hhgroup=11 THEN 1 ELSE 2 END AS hhgroup, tef.error_flag, t.recid
-FROM HHSurvey.trip_error_flags AS tef JOIN HHSurvey.Trip as t ON t.recid=tef.recid JOIN hhts_cleaning.HHSurvey.Household AS h ON t.hhid=h.hhid WHERE h.hh_iscomplete_b=1) AS SourceTable
+FROM HHSurvey.trip_error_flags AS tef JOIN HHSurvey.Trip as t ON t.recid=tef.recid JOIN hhts_cleaning.HHSurvey.Household AS h ON t.hhid=h.hhid
 PIVOT
 (
  count(recid)
@@ -53,7 +53,7 @@ ORDER BY pvt.error_flag;
 
 SELECT tef.error_flag, count(*) AS is_complete_b
 FROM HHSurvey.trip_error_flags AS tef JOIN HHSurvey.Trip as t ON t.recid=tef.recid JOIN hhts_cleaning.HHSurvey.Household AS h ON t.hhid=h.hhid 
-WHERE h.hh_iscomplete_b=1 --AND t.psrc_comment IS NULL 
+ --AND t.psrc_comment IS NULL 
 GROUP BY tef.error_flag ORDER BY count(*) DESC;
 
 --Trip error code count by iOS-affected persons

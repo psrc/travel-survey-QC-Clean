@@ -151,17 +151,4 @@ SELECT t.region_tripends, count(*) FROM HHSurvey.Trip AS t GROUP BY t.region_tri
 UPDATE t
 SET t.dest_county = r.county_fip
 FROM HHSurvey.Trip AS t JOIN ElmerGeo.dbo.COUNTY_LINES AS r ON t.dest_geom.STIntersects(r.Shape)=1
-WHERE r.psrc=1;
-
-UPDATE hhts_cleaning.HHSurvey.Trip
-SET psrc_comment='ADD RETURN HOME 19:16' WHERE recid=39713;
-UPDATE hhts_cleaning.HHSurvey.Trip
-SET psrc_comment='ADD RETURN HOME 19:55' WHERE recid=71410;
-UPDATE hhts_cleaning.HHSurvey.Trip
-SET psrc_comment='ADD RETURN HOME 5:09' WHERE recid=87726;
-UPDATE hhts_cleaning.HHSurvey.Trip
-SET psrc_comment='ADD RETURN HOME 19:16' WHERE recid=1493;
-UPDATE hhts_cleaning.HHSurvey.Trip
-SET psrc_comment='ADD RETURN HOME 12:45' WHERE recid=40402;
-UPDATE hhts_cleaning.HHSurvey.Trip
-SET psrc_comment='ADD RETURN HOME 19:35' WHERE recid=69153;
+WHERE r.home_in_region=1;
