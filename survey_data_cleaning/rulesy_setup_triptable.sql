@@ -3,7 +3,8 @@
    
    --you must update to reflect the source table name, line 340
 */
-
+DROP PROCEDURE IF EXISTS HHSurvey.rulesy_setup_triptable;
+GO
 CREATE PROCEDURE HHSurvey.rulesy_setup_triptable
 AS BEGIN
 
@@ -21,7 +22,6 @@ AS BEGIN
                [tripnum] [int] NOT NULL DEFAULT 0,
                [traveldate] datetime2 NULL,
                [daynum] [int] NULL,
-               [copied_trip] [int] NULL,
                [depart_time_timestamp] datetime2 NULL,
                [arrival_time_timestamp] datetime2 NULL,
                [origin_lat] [float] NULL,
@@ -47,43 +47,18 @@ AS BEGIN
                [travelers_nonhh] [int] NOT NULL,
                [travelers_total] [int] NOT NULL,
                [origin_purpose] [int] NULL,
-               [origin_purpose_cat] int null,
                [dest_purpose] [int] NULL,
                [dest_purpose_other] nvarchar(255) null,
-               [dest_purpose_cat] int null,
                [mode_1] smallint NOT NULL,
                [mode_2] smallint NULL,
                [mode_3] smallint NULL,
                [mode_4] smallint NULL,
-               mode_type int null,
-               [driver] smallint NULL,
-               [is_access] smallint NULL,
-               [is_egress] smallint NULL,
-               [has_access] smallint NULL,
-               [has_egress] smallint NULL,                              
+               [driver] smallint NULL,                            
                [mode_acc] smallint NULL,
                [mode_egr] smallint NULL,
                [speed_mph] [float] NULL,
-               trace_quality_flag nvarchar(20) NULL,
-               [user_added] smallint null,
-               [user_merged] smallint NULL,
-               [user_split] smallint NULL,
-               [analyst_merged] smallint NULL,
-               [analyst_split] smallint NULL,
-               [analyst_split_loop] smallint null,
                [day_id] [bigint] NOT NULL,
-               [travel_date] [date] NOT NULL,
-               [travel_dow] [int] NOT NULL,
-               [distance_meters] [float] NULL,
-               [duration_minutes] [int] NULL,
-               [duration_seconds] [int] NULL,
-               [speed_flag] [int] NULL,
-               [dwell_mins] [float] NULL,
-               [mode_other_specify] [nvarchar](1000)  NULL,
-               [is_transit] [int] NULL,
-               [flag_teleport] [int] NULL,
-               [trip_weight] [int] NULL,
-               [survey_year] [int] NOT NULL
+               [mode_other_specify] [nvarchar](1000) NULL
           );
           COMMIT TRANSACTION;
 
@@ -96,7 +71,6 @@ AS BEGIN
                ,[tripnum]
                ,[traveldate]
                ,[daynum]
-               ,[copied_trip]
                ,[depart_time_timestamp]
                ,[arrival_time_timestamp]
                ,[origin_lat]
@@ -122,43 +96,18 @@ AS BEGIN
                ,[travelers_nonhh]
                ,[travelers_total]
                ,[origin_purpose]
-               ,origin_purpose_cat
                ,[dest_purpose]
-               ,[dest_purpose_other]
-               ,dest_purpose_cat               
+               ,[dest_purpose_other]             
                ,[mode_1]
                ,[mode_2]
                ,[mode_3]
-               ,[mode_4]
-               ,mode_type               
-               ,[driver]
-               ,[is_access]
-               ,[is_egress]
-               ,[has_access]
-               ,[has_egress]               
+               ,[mode_4]            
+               ,[driver]              
                ,[mode_acc]
                ,[mode_egr]               
                ,[speed_mph]
-               ,[trace_quality_flag]
-               ,[user_added]
-               ,[user_merged]
-               ,[user_split]
-               ,[analyst_merged]
-               ,[analyst_split]
-               ,[analyst_split_loop]
                ,[day_id]
-               ,[travel_date] 
-               ,[travel_dow] 
-               ,[distance_meters]
-               ,[duration_minutes]
-               ,[duration_seconds]
-               ,[speed_flag]
-               ,[dwell_mins]
                ,[mode_other_specify]
-               ,[is_transit]
-               ,[flag_teleport]
-               ,[trip_weight]
-               ,[survey_year] 
                               )
           SELECT
                CAST(hhid AS decimal(19,0) )
@@ -168,7 +117,6 @@ AS BEGIN
                ,CAST(tripnum AS [int])
                ,convert(date, [travel_date], 121)
                ,CAST(daynum AS [int])
-               ,CAST(copied_trip AS [int])
                ,DATETIME2FROMPARTS(CAST(LEFT(depart_date, 4) AS int), 
                                 CAST(SUBSTRING(CAST(depart_date AS nvarchar), 6, 2) AS int), 
                                 CAST(RIGHT(depart_date, 2) AS int), CAST(depart_time_hour AS int), 
@@ -201,43 +149,18 @@ AS BEGIN
                ,CAST(travelers_nonhh AS [int])
                ,CAST(travelers_total AS [int])
                ,CAST(origin_purpose AS [int])
-               ,CAST(origin_purpose_cat AS int)
                ,CAST(dest_purpose AS [int])
                ,CAST(dest_purpose_other AS nvarchar(255))
-               ,CAST(dest_purpose_cat AS int)
                ,cast([mode_1] as smallint)
                ,cast([mode_2] as smallint)
                ,cast([mode_3] as smallint)
                ,NULL --cast([mode_4] as smallint)
-               ,CAST(mode_type AS int)
                ,cast([driver] as smallint) 
-               ,cast([is_access] as smallint)
-               ,cast([is_egress] as smallint)
-               ,cast([has_access] as smallint)
-               ,cast([has_egress] as smallint)  
                ,cast([mode_acc] as smallint)
                ,cast([mode_egr] as smallint)
                ,CAST(speed_mph AS [float])
-               ,CAST(transit_quality_flag AS nvarchar(20))
-               ,CAST(user_added AS smallint)
-               ,CAST(user_merged AS smallint)
-               ,CAST(user_split AS smallint)
-               ,CAST(analyst_merged AS smallint)
-               ,CAST(analyst_split AS smallint)
-               ,CAST(analyst_split_loop AS smallint)
                ,CAST(day_id AS bigint)
-               ,CAST(travel_date AS date)
-               ,CAST(travel_dow AS  smallint)
-               ,CAST(distance_meters as float)
-               ,CAST(duration_minutes as int)
-               ,CAST(duration_seconds as int)
-               ,CAST(speed_flag as int)
-               ,CAST(dwell_mins as float)
                ,CAST(mode_other_specify as nvarchar(1000))
-               ,CAST(is_transit as int)
-               ,CAST(flag_teleport as int)
-               ,CAST(trip_weight as int)
-               ,CAST(survey_year as int)
                FROM Elmer.stg.hhsurvey25_unlinked_trip
                ORDER BY tripid;
           COMMIT TRANSACTION;
